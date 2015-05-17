@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>LiveSwiper</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="css/streamBox.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/angular.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div ng-app="LiveSwiper" ng-controller="customersCtrl" resize>
+    <div class="videoWrapper">
+        <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block">
+            Your browser does not support Iframes
+        </iframe>
+    </div>
+
+    <br>
+    <section id="toolbar" style="margin-left: 25%; width: 50%;">
+        <p style="text-align:left" class="col-md-8 lead">{{title}}</p>
+
+        <div class="col-md-4 buttons">
+            <button ng-click="loadNextStream()" class="btn-responsive btn btn-primary" style="text-align: left">Next
+                Stream
+            </button>
+            <button class="btn-responsive btn btn-success" style="text-align: center"> Like</button>
+            <button class="btn-responsive btn btn-danger" style="text-align: right"> Dislike</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    var app = angular.module('LiveSwiper', []);
+    app.controller('customersCtrl', function ($scope, $sce, $http) {
+        $scope.loadNextStream = function () {
+            $http.get("http://api.liveguide.li/getRandomStream")
+                    .success(function (response) {
+                        var serviceSpecificAutoplay = {
+                            Ustream: '?autoplay=true&controls=false', //TODO - autoplay not working for Ustream?
+                            YouTube: '?autoplay=1&autohide=1'
+                        }
+
+                        response = response.response.content;
+
+                        if (response.hasOwnProperty('title')) {
+                            $scope.title = response.title;
+                        } else {
+                            console.log('Stream response did not contain a title');
+                            $scope.title = 'Unknown Stream';
+                        }
+
+                        if (response.hasOwnProperty('webEmbedURL_s')) {
+                            var streamUrl = response.webEmbedURL_s + serviceSpecificAutoplay[response.service_s];
+                            $scope.embedURL = $sce.trustAsResourceUrl(streamUrl);
+                        } else {
+                            $scope.handleIncorrectResponse('missing web webEmbedURL_s')
+                        }
+                    }).error(function (data, status, headers, config) {
+                        $scope.handleIncorrectResponse(status);
+                    });
+        }
+
+        $scope.handleIncorrectResponse = function (message) {
+            //TODO - add proper error message in UI
+            console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
+            $scope.loadNextStream();
+        }
+        $scope.loadNextStream();
+
+    });
+
+</script>
+</body>
+</html>
