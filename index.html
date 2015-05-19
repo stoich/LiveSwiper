@@ -16,6 +16,12 @@
 <body>
 
 <div ng-app="LiveSwiper" ng-controller="customersCtrl" resize>
+    <div class="col-md-4">
+        <hr>
+        <p style="text-align:center" class="col-md-8 lead"><b> Service: </b>{{service}}</p>
+
+        <p style="text-align:center" class="col-md-8 lead"><b> User: </b>{{user}}</p>
+    </div>
     <div class="videoWrapper">
         <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block">
             Your browser does not support Iframes
@@ -39,26 +45,63 @@
 <script>
     var app = angular.module('LiveSwiper', []);
     app.controller('customersCtrl', function ($scope, $sce, $http) {
-        $scope.loadNextStream = function () {
-            $http.get("http://api.liveguide.li/getRandomStream")
-                    .success(function (response) {
-                        var serviceSpecificAutoplay = {
-                            Ustream: '?autoplay=true&controls=false', //TODO - autoplay not working for Ustream?
-                            YouTube: '?autoplay=1&autohide=1'
-                        }
+        var serviceConfiguration = {
+            Twitch: {
+                additionalParameters: '',
+                getCustomUrl: function (response) {
+                    return response.webEmbedURL_s.replace('hls', 'embed');
+                }
+            },
+            Ustream: {
+                additionalParameters: 'autoplay=true'
+            },
+            YouTube: {
+                additionalParameters: 'autoplay=1&controls=0'
+            },
+            Dailymotion: {
+                additionalParameters: 'autoplay=1'
+            },
+            Hitbox: {
+                additionalParameters: 'autoplay=true'
+            },
+            Bambuser: {
+                additionalParameters: 'autoplay=1'
+            },
+            Azubu: {
+                additionalParameters: ''
+            }
+        }
 
+        $scope.loadNextStream = function () {
+            $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random()) //Prevent caching with random parameter
+                    .success(function (response) {
                         response = response.response.content;
 
                         if (response.hasOwnProperty('title')) {
-                            $scope.title = response.title;
+                            $scope.title = response.title[0];
                         } else {
                             console.log('Stream response did not contain a title');
                             $scope.title = 'Unknown Stream';
                         }
 
                         if (response.hasOwnProperty('webEmbedURL_s')) {
-                            var streamUrl = response.webEmbedURL_s + serviceSpecificAutoplay[response.service_s];
+                            var streamUrl = response.webEmbedURL_s;
+
+                            if (serviceConfiguration.hasOwnProperty(response.service_s)) {
+                                $scope.service = response.service_s
+
+                                var serviceConfig = serviceConfiguration[response.service_s];
+
+                                if (serviceConfig.hasOwnProperty('getCustomUrl')) {
+                                    streamUrl = serviceConfig.getCustomUrl(response);
+                                }
+
+                                var join = streamUrl.indexOf('?') === -1 ? '?' : '&';
+                                streamUrl = streamUrl + join + serviceConfig.additionalParameters;
+                            }
+
                             $scope.embedURL = $sce.trustAsResourceUrl(streamUrl);
+                            $scope.user = response.username_s;
                         } else {
                             $scope.handleIncorrectResponse('missing web webEmbedURL_s')
                         }
