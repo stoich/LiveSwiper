@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="css/streamBox.css">
     <link rel="stylesheet" href="css/toolbar.css">
+    <link rel="stylesheet" href="css/modal.css">
 
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
@@ -19,11 +20,18 @@
 
     <div class="col-md-4 streamInfo" style="z-index: 1">
         <br>
-        <stream-Info info='["service", response.service_s,  "img/twitch.png",]'
-                     add-pref='addPreference(field, value, preference)'></stream-Info>
-        <stream-Info info='["user", response.username_s, response.profilePic_s]'
-                     add-pref='addPreference(field, value, preference)'></stream-Info>
-        <stream-Info info='["views", response.viewers_i, "img/views.png"]'></stream-Info>
+
+        <stream-Info info='{field: "service", value: response.service_s,  src: "img/twitch.png"}'
+                     add-pref='addPreference(field, value, preference)'>
+        </stream-Info>
+
+        <stream-Info info='{field: "user", value: response.username_s, src: response.profilePic_s}'
+                     add-pref='addPreference(field, value, preference)'>
+        </stream-Info>
+
+        <stream-Info info='{field: "views", value: response.viewers_i, src: "img/views.png"}'
+                     add-pref='addCustomFilter(field)'>
+        </stream-Info>
 
     </div>
     <div class="videoWrapper" style="z-index: 0">
@@ -44,22 +52,17 @@
             <button class="btn-responsive btn btn-danger" style="text-align: right"> Dislike</button>
         </div>
     </section>
+
+    <modal-dialog show='showModal'  width='750px' height='90%'>
+    {{field}}
+    </modal-dialog>
+
 </div>
 
 <script>
     var app = angular.module('LiveSwiper', []);
     app.controller('customersCtrl', function ($scope, $sce, $http) {
-        var userPreferences = {
-            service: {
-                like: [],
-                dislike: []
-            },
-            user: {
-                like: [],
-                dislike: []
-            }
-        }
-
+        var userPreferences = {};
         var serviceConfiguration = {
             Twitch: {
                 additionalParameters: '',
@@ -86,8 +89,11 @@
                 additionalParameters: ''
             }
         }
-        //var propertyImageMap =
 
+        $scope.addCustomFilter = function (field) {
+            $scope.showModal = true;
+            $scope.field = field;
+        }
         $scope.loadNextStream = function () {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random()) //Prevent caching with random parameter
                     .success(function (response) {
@@ -133,8 +139,15 @@
             console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
             $scope.loadNextStream();
         }
-
         $scope.addPreference = function (field, value, preference) {
+            if (!userPreferences.hasOwnProperty(field)) {
+                userPreferences[field] = {};
+            }
+
+            if (!userPreferences[field].hasOwnProperty(preference)) {
+                userPreferences[field][preference] = [];
+            }
+
             userPreferences[field][preference].push(value);
 
             console.log(field);
@@ -153,8 +166,28 @@
             },
             templateUrl: 'streamInfoTemplate.html'
         };
+    }).directive('modalDialog', function () {
+        return {
+            restrict: 'E',
+            scope: {
+                show: '=',
+                field: '='
+            },
+            replace: true, // Replace with the template below
+            transclude: true, // we want to insert custom content inside the directive
+            link: function (scope, element, attrs) {
+                scope.dialogStyle = {};
+                if (attrs.width)
+                    scope.dialogStyle.width = attrs.width;
+                if (attrs.height)
+                    scope.dialogStyle.height = attrs.height;
+                scope.hideModal = function () {
+                    scope.show = false;
+                };
+            },
+            templateUrl: 'modalTemplate.html'
+        };
     });
-
 </script>
 </body>
 </html>
