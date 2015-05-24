@@ -16,13 +16,17 @@
 <body>
 
 <div ng-app="LiveSwiper" ng-controller="customersCtrl" resize>
-    <div class="col-md-4">
-        <hr>
-        <p style="text-align:center" class="col-md-8 lead"><b> Service: </b>{{service}}</p>
 
-        <p style="text-align:center" class="col-md-8 lead"><b> User: </b>{{user}}</p>
+    <div class="col-md-4 streamInfo" style="z-index: 1">
+        <br>
+        <stream-Info info='["service", response.service_s,  "img/twitch.png",]'
+                     add-pref='addPreference(field, value, preference)'></stream-Info>
+        <stream-Info info='["user", response.username_s, response.profilePic_s]'
+                     add-pref='addPreference(field, value, preference)'></stream-Info>
+        <stream-Info info='["views", response.viewers_i, "img/views.png"]'></stream-Info>
+
     </div>
-    <div class="videoWrapper">
+    <div class="videoWrapper" style="z-index: 0">
         <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block">
             Your browser does not support Iframes
         </iframe>
@@ -45,6 +49,17 @@
 <script>
     var app = angular.module('LiveSwiper', []);
     app.controller('customersCtrl', function ($scope, $sce, $http) {
+        var userPreferences = {
+            service: {
+                like: [],
+                dislike: []
+            },
+            user: {
+                like: [],
+                dislike: []
+            }
+        }
+
         var serviceConfiguration = {
             Twitch: {
                 additionalParameters: '',
@@ -71,11 +86,14 @@
                 additionalParameters: ''
             }
         }
+        //var propertyImageMap =
 
         $scope.loadNextStream = function () {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random()) //Prevent caching with random parameter
                     .success(function (response) {
                         response = response.response.content;
+                        $scope.model = {service: {name: response.service_s}};
+                        $scope.response = response;
 
                         if (response.hasOwnProperty('title')) {
                             $scope.title = response.title[0];
@@ -89,6 +107,7 @@
 
                             if (serviceConfiguration.hasOwnProperty(response.service_s)) {
                                 $scope.service = response.service_s
+
 
                                 var serviceConfig = serviceConfiguration[response.service_s];
 
@@ -109,14 +128,31 @@
                         $scope.handleIncorrectResponse(status);
                     });
         }
-
         $scope.handleIncorrectResponse = function (message) {
             //TODO - add proper error message in UI
             console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
             $scope.loadNextStream();
         }
-        $scope.loadNextStream();
 
+        $scope.addPreference = function (field, value, preference) {
+            userPreferences[field][preference].push(value);
+
+            console.log(field);
+            console.log(value);
+            console.log(preference);
+            console.log(userPreferences);
+        }
+
+        $scope.loadNextStream();
+    }).directive('streamInfo', function () {
+        return {
+            restrict: 'E',
+            scope: {
+                streamInfo: '=info',
+                addPreference: '&addPref'
+            },
+            templateUrl: 'streamInfoTemplate.html'
+        };
     });
 
 </script>

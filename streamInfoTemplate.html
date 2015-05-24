@@ -1,0 +1,19 @@
+<div class="row">
+
+    <div class="col-md-1">
+        <img ng-src="{{streamInfo[2]}}" style="max-width:100%">
+    </div>
+
+    <div class="col-md-2" style="margin-top:6px; margin-left: 5px">
+        <p> {{streamInfo[1]}} </p>
+    </div>
+
+    <div class="col-md-6">
+        <button class="btn-responsive btn btn-success" style="float: right; margin-left:5px"
+                ng-click='addPreference({field: streamInfo[0], value: streamInfo[1], preference: "like"})'>
+            Like
+        </button>
+        <button class="btn-responsive btn btn-danger" style="float: right"> Dislike</button>
+    </div>
+</div>
+<hr style="margin-right:25%;">
