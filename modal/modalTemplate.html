@@ -1,0 +1,24 @@
+<div class='ng-modal' ng-show='show'>
+    <div class='ng-modal-overlay' ng-click='hideModal()'></div>
+    <div class='ng-modal-dialog' ng-style='dialogStyle'>
+        <div class='ng-modal-close' ng-click='hideModal()'>X</div>
+        <div class='ng-modal-dialog-content'>
+            Please specify a condition regarding {{field}} that you {{preference}}:
+            <br>
+            <br>
+            {{field}}
+            <select ng-model="model.id" convert-to-number>
+                <option value="="> =</option>
+                <option value=">"> ></option>
+                <option value="<"> <</option>
+            </select>
+            {{value}}
+            <br>
+            <br>
+            <button class="btn-responsive btn btn-success" style="text-align: right"
+                    ng-click='addPreference({field: field, value: model.id + value, preference: preference}); hideModal()'>
+                Submit
+            </button>
+        </div>
+    </div>
+</div>

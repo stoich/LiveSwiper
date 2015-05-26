@@ -30,7 +30,7 @@
         </stream-Info>
 
         <stream-Info info='{field: "views", value: response.viewers_i, src: "img/views.png"}'
-                     add-pref='addCustomFilter(field)'>
+                     add-pref='addCustomFilter(field, value, preference)'>
         </stream-Info>
 
     </div>
@@ -53,10 +53,9 @@
         </div>
     </section>
 
-    <modal-dialog show='showModal'  width='750px' height='90%'>
-    {{field}}
+    <modal-dialog show='showModal' field='field' preference='preference' value="value"
+                  add-pref="addPreference(field, value, preference)" width='750px' height='90%'>
     </modal-dialog>
-
 </div>
 
 <script>
@@ -90,10 +89,6 @@
             }
         }
 
-        $scope.addCustomFilter = function (field) {
-            $scope.showModal = true;
-            $scope.field = field;
-        }
         $scope.loadNextStream = function () {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random()) //Prevent caching with random parameter
                     .success(function (response) {
@@ -139,6 +134,14 @@
             console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
             $scope.loadNextStream();
         }
+
+        $scope.addCustomFilter = function (field, value, preference) {
+            console.log(preference);
+            $scope.showModal = true;
+            $scope.field = field;
+            $scope.value = value;
+            $scope.preference = preference;
+        }
         $scope.addPreference = function (field, value, preference) {
             if (!userPreferences.hasOwnProperty(field)) {
                 userPreferences[field] = {};
@@ -155,39 +158,12 @@
             console.log(preference);
             console.log(userPreferences);
         }
-
         $scope.loadNextStream();
-    }).directive('streamInfo', function () {
-        return {
-            restrict: 'E',
-            scope: {
-                streamInfo: '=info',
-                addPreference: '&addPref'
-            },
-            templateUrl: 'streamInfoTemplate.html'
-        };
-    }).directive('modalDialog', function () {
-        return {
-            restrict: 'E',
-            scope: {
-                show: '=',
-                field: '='
-            },
-            replace: true, // Replace with the template below
-            transclude: true, // we want to insert custom content inside the directive
-            link: function (scope, element, attrs) {
-                scope.dialogStyle = {};
-                if (attrs.width)
-                    scope.dialogStyle.width = attrs.width;
-                if (attrs.height)
-                    scope.dialogStyle.height = attrs.height;
-                scope.hideModal = function () {
-                    scope.show = false;
-                };
-            },
-            templateUrl: 'modalTemplate.html'
-        };
     });
 </script>
+
+<script src="streamInfo/directive.js"></script>
+<script src="modal/directive.js"></script>
+
 </body>
 </html>
