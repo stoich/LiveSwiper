@@ -3,11 +3,12 @@
     <div class='ng-modal-dialog' ng-style='dialogStyle'>
         <div class='ng-modal-close' ng-click='hideModal()'>X</div>
         <div class='ng-modal-dialog-content'>
-            Please specify a condition regarding {{field}} that you {{preference}}:
+            Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
+            you {{preference}}:
             <br>
             <br>
-            {{field}}
-            <select ng-model="model.id" convert-to-number>
+            {{field.replace('_s','').replace('_i','')}}
+            <select ng-model="model.id" ng-selected="$first">
                 <option value="="> =</option>
                 <option value=">"> ></option>
                 <option value="<"> <</option>

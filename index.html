@@ -13,6 +13,7 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/general.js"></script>
 </head>
 <body>
 
@@ -21,16 +22,16 @@
     <div class="col-md-4 streamInfo" style="z-index: 1">
         <br>
 
-        <stream-Info info='{field: "service", value: response.service_s,  src: "img/twitch.png"}'
+        <stream-Info info='{field: "service_s", value: response.service_s,  src: "img/twitch.png"}'
                      add-pref='addPreference(field, value, preference)'>
         </stream-Info>
 
-        <stream-Info info='{field: "user", value: response.username_s, src: response.profilePic_s}'
+        <stream-Info info='{field: "username_s", value: response.username_s, src: response.profilePic_s}'
                      add-pref='addPreference(field, value, preference)'>
         </stream-Info>
 
-        <stream-Info info='{field: "views", value: response.viewers_i, src: "img/views.png"}'
-                     add-pref='addCustomFilter(field, value, preference)'>
+        <stream-Info info='{field: "viewers_i", value: response.viewers_i, src: "img/views.png"}'
+                     add-pref='buildCustomPreference(field, value, preference)'>
         </stream-Info>
 
     </div>
@@ -61,105 +62,168 @@
 <script>
     var app = angular.module('LiveSwiper', []);
     app.controller('customersCtrl', function ($scope, $sce, $http) {
-        var userPreferences = {};
-        var serviceConfiguration = {
-            Twitch: {
-                additionalParameters: '',
-                getCustomUrl: function (response) {
-                    return response.webEmbedURL_s.replace('hls', 'embed');
-                }
-            },
-            Ustream: {
-                additionalParameters: 'autoplay=true'
-            },
-            YouTube: {
-                additionalParameters: 'autoplay=1&controls=0'
-            },
-            Dailymotion: {
-                additionalParameters: 'autoplay=1'
-            },
-            Hitbox: {
-                additionalParameters: 'autoplay=true'
-            },
-            Bambuser: {
-                additionalParameters: 'autoplay=1'
-            },
-            Azubu: {
-                additionalParameters: ''
-            }
-        }
-
-        $scope.loadNextStream = function () {
-            $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random()) //Prevent caching with random parameter
-                    .success(function (response) {
-                        response = response.response.content;
-                        $scope.model = {service: {name: response.service_s}};
-                        $scope.response = response;
-
-                        if (response.hasOwnProperty('title')) {
-                            $scope.title = response.title[0];
-                        } else {
-                            console.log('Stream response did not contain a title');
-                            $scope.title = 'Unknown Stream';
+                var userPreferences = {};
+                var serviceConfiguration = {
+                    Twitch: {
+                        additionalParameters: '',
+                        getCustomUrl: function (response) {
+                            return response.webEmbedURL_s.replace('hls', 'embed');
                         }
+                    },
+                    Ustream: {
+                        additionalParameters: 'autoplay=true'
+                    },
+                    YouTube: {
+                        additionalParameters: 'autoplay=1&controls=0'
+                    },
+                    Dailymotion: {
+                        additionalParameters: 'autoplay=1'
+                    },
+                    Hitbox: {
+                        additionalParameters: 'autoplay=true'
+                    },
+                    Bambuser: {
+                        additionalParameters: 'autoplay=1'
+                    },
+                    Azubu: {
+                        additionalParameters: ''
+                    }
+                }
 
-                        if (response.hasOwnProperty('webEmbedURL_s')) {
-                            var streamUrl = response.webEmbedURL_s;
-
-                            if (serviceConfiguration.hasOwnProperty(response.service_s)) {
-                                $scope.service = response.service_s
+                $scope.loadNextStream = function () {
 
 
-                                var serviceConfig = serviceConfiguration[response.service_s];
+                    $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random() + buildFilter()) //Prevent caching with random parameter
+                            .success(function (response) {
+                                response = response.response.content;
+                                $scope.model = {service: {name: response.service_s}};
+                                $scope.response = response;
 
-                                if (serviceConfig.hasOwnProperty('getCustomUrl')) {
-                                    streamUrl = serviceConfig.getCustomUrl(response);
+                                if (response.hasOwnProperty('title')) {
+                                    $scope.title = response.title[0];
+                                } else {
+                                    console.log('Stream response did not contain a title');
+                                    $scope.title = 'Unknown Stream';
                                 }
 
-                                var join = streamUrl.indexOf('?') === -1 ? '?' : '&';
-                                streamUrl = streamUrl + join + serviceConfig.additionalParameters;
+                                if (response.hasOwnProperty('webEmbedURL_s')) {
+                                    var streamUrl = response.webEmbedURL_s;
+
+                                    if (serviceConfiguration.hasOwnProperty(response.service_s)) {
+                                        $scope.service = response.service_s
+
+
+                                        var serviceConfig = serviceConfiguration[response.service_s];
+
+                                        if (serviceConfig.hasOwnProperty('getCustomUrl')) {
+                                            streamUrl = serviceConfig.getCustomUrl(response);
+                                        }
+
+                                        var join = streamUrl.indexOf('?') === -1 ? '?' : '&';
+                                        streamUrl = streamUrl + join + serviceConfig.additionalParameters;
+                                    }
+
+                                    $scope.embedURL = $sce.trustAsResourceUrl(streamUrl);
+                                    $scope.user = response.username_s;
+                                } else {
+                                    $scope.handleIncorrectResponse('missing web webEmbedURL_s')
+                                }
+                            }).error(function (data, status, headers, config) {
+                                $scope.handleIncorrectResponse(status);
+                            });
+                }
+                $scope.handleIncorrectResponse = function (message) {
+                    //TODO - add proper error message in UI
+                    console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
+                    $scope.loadNextStream();
+                }
+                $scope.buildCustomPreference = function (field, value, preference) {
+                    console.log(preference);
+                    $scope.showModal = true;
+                    $scope.field = field;
+                    $scope.value = value;
+                    $scope.preference = preference;
+                }
+                $scope.addPreference = function (field, value, preference) {
+                    if (!userPreferences.hasOwnProperty(field)) {
+                        userPreferences[field] = {};
+                    }
+
+                    if (!userPreferences[field].hasOwnProperty(preference)) {
+                        userPreferences[field][preference] = [];
+                    }
+
+                    userPreferences[field][preference].push(value);
+
+                    console.log(field);
+                    console.log(value);
+                    console.log(preference);
+                    console.log(userPreferences);
+                }
+
+                var buildFilter = function () {
+                    var filter = '';
+
+                    for (var field in userPreferences) {
+                        if (userPreferences.hasOwnProperty(field)) {
+
+                            console.log('are we here 0?');
+                            console.log(field);
+                            if (field.indexOf('_s') != -1) {
+                                console.log('are we here 1?');
+                                var newFilter = buildStringFilter(field.replace('_s', ''), userPreferences[field]);
+                                if (newFilter !== '') {
+                                    filter = filter + (filter === '' ? '' : ',') + newFilter;
+                                }
                             }
 
-                            $scope.embedURL = $sce.trustAsResourceUrl(streamUrl);
-                            $scope.user = response.username_s;
-                        } else {
-                            $scope.handleIncorrectResponse('missing web webEmbedURL_s')
                         }
-                    }).error(function (data, status, headers, config) {
-                        $scope.handleIncorrectResponse(status);
-                    });
-        }
-        $scope.handleIncorrectResponse = function (message) {
-            //TODO - add proper error message in UI
-            console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
-            $scope.loadNextStream();
-        }
+                    }
 
-        $scope.addCustomFilter = function (field, value, preference) {
-            console.log(preference);
-            $scope.showModal = true;
-            $scope.field = field;
-            $scope.value = value;
-            $scope.preference = preference;
-        }
-        $scope.addPreference = function (field, value, preference) {
-            if (!userPreferences.hasOwnProperty(field)) {
-                userPreferences[field] = {};
+                    return filter === '' ? filter : "&filters=" + filter;
+                }
+
+                var buildStringFilter = function (fieldName, field) {
+                    var filter = '';
+
+                    console.log('are we here 2');
+                    console.log(field);
+                    if (field.hasOwnProperty('dislike')) {
+                        console.log('are we here 3');
+                        var dislikeArray = field.dislike;
+                        console.log(dislikeArray);
+
+                        for (var i = 0; i < dislikeArray.length; i++) {
+                            filter = filter + (i === 0 ? '' : ',') + '-' + fieldName + '=' + dislikeArray[i]
+                        }
+                    }
+
+                    if (field.hasOwnProperty('like')) {
+                        var likeArray = field.like;
+
+                        if (headsOrTails()) { //Should we pick from existing likes ?
+                            console.log('heads');
+                            var selection = likeArray[Math.floor(Math.random() * likeArray.length)];
+                            filter = fieldName + '=' + selection;
+                        }
+                    }
+
+                    console.log(filter);
+                    return filter;
+                }
+
+                var buildIntegerFilter = function () {
+                }
+
+                //50% chance to return true or false
+                var headsOrTails = function () {
+                    return Math.floor(Math.random() * 2) == 0 ? true : false;
+                }
+
+                $scope.loadNextStream();
             }
-
-            if (!userPreferences[field].hasOwnProperty(preference)) {
-                userPreferences[field][preference] = [];
-            }
-
-            userPreferences[field][preference].push(value);
-
-            console.log(field);
-            console.log(value);
-            console.log(preference);
-            console.log(userPreferences);
-        }
-        $scope.loadNextStream();
-    });
+    )
+    ;
 </script>
 
 <script src="streamInfo/directive.js"></script>
