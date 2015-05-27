@@ -13,6 +13,10 @@
         padding-top: 25px;
         height: 0;
     }
+
+    .sidebar {
+        margin-top:60%
+    }
 }
 
 @media (min-width: 1024px) {

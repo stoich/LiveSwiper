@@ -5,16 +5,24 @@
 
     .btn-responsive {
         padding: 2px 4px;
-        font-size: 200%;
+        /*font-size: 200%;*/
         line-height: 1;
         margin-top: 4px;
+    }
+
+    .label1{
+        text-align: center;
+    }
+
+    .title {
+        font-size:175%;
     }
 }
 
 @media (min-width: 1024px) {
     .btn-responsive {
         padding: 4px 9px;
-        font-size: 100%;
+        /*font-size: 100%;*/
         line-height: 1.2;
         margin-top: 4px;
     }
@@ -28,5 +36,9 @@
 
     .buttons {
         text-align: right;
+    }
+
+    .label1 {
+        text-align: left;
     }
 }
