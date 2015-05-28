@@ -22,12 +22,14 @@
     <div class="col-md-3 streamInfo sidebar" style="z-index: 1; float: left;">
         <br>
 
-        <stream-Info info='{field: "service_s", value: response.service_s,  src: "img/twitch.png"}'
-                     add-pref='addPreference(field, value, preference)'>
+        <stream-Info
+                info='{field: "service_s", value: response.service_s,  src:"img/" +  response.service_s + ".png"}'
+                add-pref='addPreference(field, value, preference)'>
         </stream-Info>
 
-        <stream-Info info='{field: "username_s", value: response.username_s, src: response.profilePic_s}'
-                     add-pref='addPreference(field, value, preference)'>
+        <stream-Info
+                info='{field: "username_s", value: response.username_s, src: response.profilePic_s === undefined ? "img/User.png" : response.profilePic_s}'
+                add-pref='addPreference(field, value, preference)'>
         </stream-Info>
 
         <stream-Info info='{field: "viewers_i", value: response.viewers_i, src: "img/views.png"}'
@@ -37,6 +39,7 @@
     </div>
     <div class="col-md-3 streamSettings sidebar" style="float:right">
         <img class="col-md-3" style="float:left;margin-top: 2px" src="img/settings.png">
+
         <h3 class="col-md-4  btn-responsive label1">Swipe Settings</h3>
     </div>
 
@@ -226,7 +229,18 @@
                 $scope.loadNextStream();
             }
     )
-    ;
+
+    app.directive('errSrc', function () {
+        return {
+            link: function (scope, element, attrs) {
+                element.bind('error', function () {
+                    if (attrs.src != attrs.errSrc) {
+                        attrs.$set('src', attrs.errSrc);
+                    }
+                });
+            }
+        }
+    });
 </script>
 
 <script src="streamInfo/directive.js"></script>
