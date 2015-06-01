@@ -2,24 +2,8 @@
     <div class='ng-modal-overlay' ng-click='hideModal()'></div>
     <div class='ng-modal-dialog' ng-style='dialogStyle'>
         <div class='ng-modal-close' ng-click='hideModal()'>X</div>
-        <div class='ng-modal-dialog-content'>
-            Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
-            you {{preference}}:
-            <br>
-            <br>
-            {{field.replace('_s','').replace('_i','')}}
-            <select ng-model="model.id" ng-selected="$first">
-                <option value="="> =</option>
-                <option value=">"> ></option>
-                <option value="<"> <</option>
-            </select>
-            {{value}}
-            <br>
-            <br>
-            <button class="btn-responsive btn btn-success" style="text-align: right"
-                    ng-click='addPreference({field: field, value: model.id + value, preference: preference}); hideModal()'>
-                Submit
-            </button>
+        <div class='ng-modal-dialog-content' ng-transclude>
+
         </div>
     </div>
 </div>

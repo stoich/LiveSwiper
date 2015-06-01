@@ -17,7 +17,7 @@
 </head>
 <body>
 
-<div ng-app="LiveSwiper" ng-controller="customersCtrl" resize>
+<div ng-app="LiveSwiper" ng-controller="customersCtrl" resize ng-cloak>
 
     <div class="col-md-3 streamInfo sidebar" style="z-index: 1; float: left;">
         <br>
@@ -37,10 +37,11 @@
         </stream-Info>
 
     </div>
-    <div class="col-md-3 streamSettings sidebar" style="float:right">
-        <img class="col-md-3" style="float:left;margin-top: 2px" src="img/settings.png">
+    <div class="col-md-3 streamSettings sidebar" style="float:right; z-index: 2;">
+        <img class="col-md-3" style="float:left;margin-top: 2px;  z-index: 2; cursor: pointer;" src="img/settings.png"
+             ng-click="openSettings()">
 
-        <h3 class="col-md-4  btn-responsive label1">Swipe Settings</h3>
+        <h3 class="col-md-4 btn-responsive label1">Swipe Settings</h3>
     </div>
 
     <div class="videoWrapper" style="z-index: 0;">
@@ -60,15 +61,68 @@
         </div>
     </section>
 
-    <modal-dialog show='showModal' field='field' preference='preference' value="value"
-                  add-pref="addPreference(field, value, preference)" width='750px' height='90%'>
+    <modal-dialog show='showModal' width='750px' height='90%'>
+
+        Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
+        you {{preference}}:
+        <br>
+        <br>
+        {{field.replace('_s','').replace('_i','')}}
+        <select ng-model="model.id" ng-selected="$first">
+            <option value="="> =</option>
+            <option value=">"> ></option>
+            <option value="<"> <</option>
+        </select>
+        {{value}}
+        <br>
+        <br>
+        <button class="btn-responsive btn btn-success" style="text-align: right"
+                ng-click='addPreference(field, model.id + value, preference); hideModal()'>
+            Submit
+        </button>
+
+    </modal-dialog>
+
+    <modal-dialog show='showSettings' width='750px' height='90%'>
+
+        <h3 style="text-align: center"> Swipe Settings </h3>
+
+        <div ng-repeat="(key, value) in userPreferences">
+
+            <div>
+                {{key.replace('_i','').replace('_s', '')}} :
+            </div>
+
+            <div ng-repeat="x in value.like" style="border: thin green solid" class="fit">
+                {{x}}
+                <button ng-click='removePreference(key, $index, "like")'> x</button>
+            </div>
+
+            <div ng-repeat="x in value.dislike" style="border: thin red solid" class="fit">
+                {{x}}
+                <button ng-click='removePreference(key, $index, "dislike")'> x</button>
+            </div>
+
+            <br>
+        </div>
+        <style>
+            .swipeSettings button {
+                text-align: right;
+                padding: 5px;
+            }
+
+            .fit {
+                display: inline-block
+            }
+        </style>
+
     </modal-dialog>
 </div>
 
 <script>
     var app = angular.module('LiveSwiper', []);
     app.controller('customersCtrl', function ($scope, $sce, $http) {
-                var userPreferences = {};
+                $scope.userPreferences = {};
                 var serviceConfiguration = {
                     Twitch: {
                         additionalParameters: '',
@@ -97,8 +151,6 @@
                 }
 
                 $scope.loadNextStream = function () {
-
-
                     $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random() + buildFilter()) //Prevent caching with random parameter
                             .success(function (response) {
                                 response = response.response.content;
@@ -111,7 +163,6 @@
                                     console.log('Stream response did not contain a title');
                                     $scope.title = 'Unknown Stream';
                                 }
-
                                 if (response.hasOwnProperty('webEmbedURL_s')) {
                                     var streamUrl = response.webEmbedURL_s;
 
@@ -151,38 +202,64 @@
                     $scope.preference = preference;
                 }
                 $scope.addPreference = function (field, value, preference) {
-                    if (!userPreferences.hasOwnProperty(field)) {
-                        userPreferences[field] = {};
+                    if (!$scope.userPreferences.hasOwnProperty(field)) {
+                        $scope.userPreferences[field] = {};
                     }
 
-                    if (!userPreferences[field].hasOwnProperty(preference)) {
-                        userPreferences[field][preference] = [];
+                    var thisField = $scope.userPreferences[field];
+
+                    if (!thisField.hasOwnProperty(preference)) {
+                        thisField[preference] = [];
                     }
 
-                    userPreferences[field][preference].push(value);
+                    if (thisField[preference].indexOf(value) === -1) {
+                        thisField[preference].push(value);
+                    }
 
                     console.log(field);
                     console.log(value);
                     console.log(preference);
-                    console.log(userPreferences);
+                    console.log($scope.userPreferences);
                 }
+                $scope.removePreference = function (field, index, preference) {
+                    var fullPreference = $scope.userPreferences[field];
+                    var currentPreference = $scope.userPreferences[field][preference];
+
+                    currentPreference.splice(index, 1);
+
+                    if (currentPreference.length === 0) {
+                        delete $scope.userPreferences[field][preference];
+                    }
+
+                    if (!fullPreference.hasOwnProperty('like') && !fullPreference.hasOwnProperty('dislike')) {
+                        delete $scope.userPreferences[field];
+                    }
+
+                }
+                $scope.openSettings = function () {
+                    $scope.showSettings = true;
+                }
+                $scope.hideModal = function () {
+                    $scope.showModal = false;
+                };
 
                 var buildFilter = function () {
                     var filter = '';
 
-                    for (var field in userPreferences) {
-                        if (userPreferences.hasOwnProperty(field)) {
-
-                            console.log('are we here 0?');
-                            console.log(field);
+                    for (var field in $scope.userPreferences) {
+                        if ($scope.userPreferences.hasOwnProperty(field)) {
                             if (field.indexOf('_s') != -1) {
-                                console.log('are we here 1?');
-                                var newFilter = buildStringFilter(field.replace('_s', ''), userPreferences[field]);
+                                var newFilter = buildStringFilter(field.replace('_s', ''), $scope.userPreferences[field]);
                                 if (newFilter !== '') {
-                                    filter = filter + (filter === '' ? '' : ',') + newFilter;
+                                    filter = appendFilter(filter, newFilter);
                                 }
                             }
-
+                            if (field.indexOf('_i') != -1) {
+                                var newFilter = buildIntegerFilter(field.replace('_i', ''), $scope.userPreferences[field]);
+                                if (newFilter !== '') {
+                                    filter = appendFilter(filter, newFilter);
+                                }
+                            }
                         }
                     }
 
@@ -192,15 +269,11 @@
                 var buildStringFilter = function (fieldName, field) {
                     var filter = '';
 
-                    console.log('are we here 2');
-                    console.log(field);
                     if (field.hasOwnProperty('dislike')) {
-                        console.log('are we here 3');
                         var dislikeArray = field.dislike;
-                        console.log(dislikeArray);
 
                         for (var i = 0; i < dislikeArray.length; i++) {
-                            filter = filter + (i === 0 ? '' : ',') + '-' + fieldName + '=' + dislikeArray[i]
+                            filter = appendFilter(filter, '-' + fieldName + '=' + dislikeArray[i]);
                         }
                     }
 
@@ -214,11 +287,81 @@
                         }
                     }
 
-                    console.log(filter);
                     return filter;
                 }
+                var buildIntegerFilter = function (fieldName, field) {
 
-                var buildIntegerFilter = function () {
+                    var greaterThan = [];
+                    var lesserThan = [];
+                    var equals = [];
+
+                    var filter = '';
+
+                    if (field.hasOwnProperty('dislike')) {
+                        var dislikeArray = field.dislike;
+                        for (var i = 0; i < dislikeArray.length; i++) {
+
+                            if (dislikeArray[i].indexOf('=') !== -1) {
+                                filter = appendFilter(filter, '-' + fieldName + '=' + dislikeArray[i].replace('=', ''));
+                            }
+
+                            if (dislikeArray[i].indexOf('<') !== -1) {
+                                greaterThan.push(dislikeArray[i].replace('>', ''))
+                            }
+
+                            if (dislikeArray[i].indexOf('>') !== -1) {
+                                lesserThan.push(dislikeArray[i].replace('<', ''))
+                            }
+
+                        }
+
+                    }
+
+                    if (field.hasOwnProperty('like')) {
+                        var likeArray = field.like;
+
+                        for (var i = 0; i < likeArray.length; i++) {
+
+                            if (likeArray[i].indexOf('=') !== -1) {
+                                equals.push(likeArray[i].replace('=', ''));
+                            }
+
+                            if (likeArray[i].indexOf('<') !== -1) {
+                                lesserThan.push(likeArray[i].replace('<', ''))
+                            }
+
+                            if (likeArray[i].indexOf('>') !== -1) {
+                                greaterThan.push(likeArray[i].replace('>', ''))
+                            }
+                        }
+                    }
+
+                    var selection = '*';
+                    if (headsOrTails()) { //Should we go for an exact integer ?
+                        if (equals.length !== 0) {
+                            selection = equals[Math.floor(Math.random() * equals.length)];
+                        }
+
+                    } else {
+                        var floor = '*';
+                        var ceiling = '*';
+                        if (greaterThan.length !== 0) {
+                            floor = Math.min.apply(Math, greaterThan) + 1; //Adding 1 to avoid >=
+                        }
+
+                        if (lesserThan.length !== 0) {
+                            ceiling = Math.max.apply(Math, lesserThan) - 1; //Subtrackting 1 to avoid >=
+                        }
+
+                        selection = '[' + floor + ' TO ' + ceiling + ']';
+                    }
+
+                    filter = appendFilter(filter, fieldName + '=' + selection);
+                    return filter;
+                }
+                var appendFilter = function (current, newFilter) {
+                    var empty = current.length === 0;
+                    return current + (empty ? '' : ',') + newFilter;
                 }
 
                 //50% chance to return true or false
@@ -241,10 +384,12 @@
             }
         }
     });
+
 </script>
 
 <script src="streamInfo/directive.js"></script>
 <script src="modal/directive.js"></script>
+<script src="swipeSettings/directive.js"></script>
 
 </body>
 </html>
