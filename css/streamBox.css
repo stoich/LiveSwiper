@@ -17,6 +17,14 @@
     .sidebar {
         margin-top:60%
     }
+
+    .counterHHMMSS {
+        magrin-top: 0%;
+    }
+
+    .timer {
+        margin-top:50%
+    }
 }
 
 @media (min-width: 1024px) {
@@ -33,5 +41,17 @@
         padding-bottom: 28.125%;
         padding-top: 25px;
         height: 0;
+    }
+
+    .timer {
+        margin-top:40%
+    }
+
+    .timer img {
+        margin-left: 30%;
+    }
+
+    .counterHHMMSS {
+        margin-top:-0.0005%
     }
 }

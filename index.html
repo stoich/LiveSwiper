@@ -3,6 +3,7 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>LiveSwiper</title>
+    <link rel="icon" type="image/svg+xml" href="img/fav.svg">
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-theme.min.css">
@@ -13,10 +14,8 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/general.js"></script>
 </head>
 <body>
-
 <div ng-app="LiveSwiper" ng-controller="customersCtrl" resize ng-cloak>
 
     <div class="col-md-3 streamInfo sidebar" style="z-index: 1; float: left;">
@@ -36,12 +35,27 @@
                      add-pref='buildCustomPreference(field, value, preference)'>
         </stream-Info>
 
+        <stream-Info info='{field: "uptime_i", value: secondsToHHMMSS(response.uptime_i), src: "img/uptime.png"}'
+                     add-pref='buildCustomPreference(field, value, preference)'>
+        </stream-Info>
+
     </div>
     <div class="col-md-3 streamSettings sidebar" style="float:right; z-index: 2;">
-        <img class="col-md-3" style="float:left;margin-top: 2px;  z-index: 2; cursor: pointer;" src="img/settings.png"
+        <img class="col-md-3" id="swipeSettingsIcon" style="float:left;margin-top: 2px;  z-index: 2; cursor: pointer;"
+             src="img/settings.png"
              ng-click="openSettings()">
 
-        <h3 class="col-md-4 btn-responsive label1">Swipe Settings</h3>
+        <h4 class="col-md-4 btn-responsive label1">Swipe Settings</h4>
+
+        <div class="timer">
+            <h3 class="col-md-12 btn-responsive label1" style="text-align:center">Next stream will load in:</h3>
+            <img class="col-md-2" src="img/timer.png" style="text-align:center;">
+
+            <h3 class="col-md-4 counterHHMMSS"
+                style="border: thin black solid; padding: 5px; text-align:center;">
+                {{secondsToHHMMSS(counter)}}</h3>
+        </div>
+
     </div>
 
     <div class="videoWrapper" style="z-index: 0;">
@@ -49,7 +63,6 @@
             Your browser does not support Iframes
         </iframe>
     </div>
-
     <br>
     <section id="toolbar" style="margin-left: 25%; width: 50%;">
         <p style="text-align:left" class="col-md-8 lead title">{{title}}</p>
@@ -82,7 +95,6 @@
         </button>
 
     </modal-dialog>
-
     <modal-dialog show='showSettings' width='750px' height='90%'>
 
         <h3 style="text-align: center"> Swipe Settings </h3>
@@ -105,6 +117,8 @@
 
             <br>
         </div>
+        <h4> Play new stream every: </h4>
+        <input type="text" ng-model="changeTime.num"/><br/>
         <style>
             .swipeSettings button {
                 text-align: right;
@@ -121,7 +135,7 @@
 
 <script>
     var app = angular.module('LiveSwiper', []);
-    app.controller('customersCtrl', function ($scope, $sce, $http) {
+    app.controller('customersCtrl', function ($scope, $sce, $http, $timeout) {
                 $scope.userPreferences = {};
                 var serviceConfiguration = {
                     Twitch: {
@@ -149,6 +163,9 @@
                         additionalParameters: ''
                     }
                 }
+                $scope.changeTime = {
+                    num: 360
+                };
 
                 $scope.loadNextStream = function () {
                     $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random() + buildFilter()) //Prevent caching with random parameter
@@ -185,6 +202,9 @@
                                 } else {
                                     $scope.handleIncorrectResponse('missing web webEmbedURL_s')
                                 }
+
+                                resetCounter();
+                                console.log($scope.changeTime)
                             }).error(function (data, status, headers, config) {
                                 $scope.handleIncorrectResponse(status);
                             });
@@ -265,7 +285,6 @@
 
                     return filter === '' ? filter : "&filters=" + filter;
                 }
-
                 var buildStringFilter = function (fieldName, field) {
                     var filter = '';
 
@@ -363,13 +382,46 @@
                     var empty = current.length === 0;
                     return current + (empty ? '' : ',') + newFilter;
                 }
-
                 //50% chance to return true or false
                 var headsOrTails = function () {
                     return Math.floor(Math.random() * 2) == 0 ? true : false;
                 }
+                var resetCounter = function () {
+                    $scope.counter = $scope.changeTime.num;
+                }
 
                 $scope.loadNextStream();
+
+                $scope.onTimeout = function () {
+                    if ($scope.counter === 0) {
+                        $scope.loadNextStream();
+                    }
+
+                    $scope.counter--;
+                    mytimeout = $timeout($scope.onTimeout, 1000);
+                }
+                var mytimeout = $timeout($scope.onTimeout, 1000);
+                $scope.stop = function () {
+                    $timeout.cancel(mytimeout);
+                }
+                $scope.secondsToHHMMSS = function (seconds) {
+                    var sec_num = parseInt(seconds, 10); // don't forget the second param
+                    var hours = Math.floor(sec_num / 3600);
+                    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+                    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+                    if (hours < 10) {
+                        hours = "0" + hours;
+                    }
+                    if (minutes < 10) {
+                        minutes = "0" + minutes;
+                    }
+                    if (seconds < 10) {
+                        seconds = "0" + seconds;
+                    }
+                    var time = hours + ':' + minutes + ':' + seconds;
+                    return time;
+                }
             }
     )
 
