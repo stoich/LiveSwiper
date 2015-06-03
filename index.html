@@ -10,10 +10,12 @@
     <link rel="stylesheet" href="css/streamBox.css">
     <link rel="stylesheet" href="css/toolbar.css">
     <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="css/select.css">
 
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+
 </head>
 <body>
 <div ng-app="LiveSwiper" ng-controller="customersCtrl" resize ng-cloak>
@@ -36,7 +38,28 @@
         </stream-Info>
 
         <stream-Info info='{field: "uptime_i", value: secondsToHHMMSS(response.uptime_i), src: "img/uptime.png"}'
-                     add-pref='buildCustomPreference(field, value, preference)'>
+                     add-pref='buildCustomPreference(field, value, preference)'
+                     ng-show='response.hasOwnProperty("uptime_i")'>
+        </stream-Info>
+
+        <stream-Info
+                info='{field: "tag_s", value: response.tag_s, src: "img/tag.png"}'
+                add-pref='addPreference(field, value, preference)'>
+        </stream-Info>
+
+        <stream-Info
+                info='{field: "genre_s", value: response.genre_s, src: "img/gen.png"}'
+                add-pref='addPreference(field, value, preference)'>
+        </stream-Info>
+
+        <stream-Info
+                info='{field: "category_s", value: response.category_s, src: "img/cat.png"}'
+                add-pref='addPreference(field, value, preference)'>
+        </stream-Info>
+
+        <stream-Info
+                info='{field: "language_s", value: response.language_s, src: "img/lan.png"}'
+                add-pref='addPreference(field, value, preference)'>
         </stream-Info>
 
     </div>
@@ -59,7 +82,7 @@
     </div>
 
     <div class="videoWrapper" style="z-index: 0;">
-        <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block">
+        <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block" style="background: black;">
             Your browser does not support Iframes
         </iframe>
     </div>
@@ -74,51 +97,55 @@
         </div>
     </section>
 
-    <modal-dialog show='showModal' width='750px' height='90%'>
+    <modal-dialog show='showModal' width='500px' height='300px'>
 
-        Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
-        you {{preference}}:
+        <h3 class="col-md-12">Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
+            you {{preference}}:</h3>
         <br>
+        <hr class="col-md-12">
         <br>
-        {{field.replace('_s','').replace('_i','')}}
-        <select ng-model="model.id" ng-selected="$first">
+
+        <p class="col-md-2 selectLabel">{{field.replace('_s','').replace('_i','')}}</p>
+        <select class='col-md-2 dropdown' ng-model="model.id" ng-selected="$first">
             <option value="="> =</option>
             <option value=">"> ></option>
-            <option value="<"> <</option>
+            <option value="<" ng-show="HHMMSStoSeconds(value) > 0"> <</option>
         </select>
-        {{value}}
+
+        <p class="col-md-1 selectLabel"> {{value}} </p>
         <br>
         <br>
-        <button class="btn-responsive btn btn-success" style="text-align: right"
-                ng-click='addPreference(field, model.id + value, preference); hideModal()'>
+        <button class="btn-responsive btn btn-success" style="position: absolute;right:0; bottom:0;margin:2px"
+                ng-click='addPreference(field, model.id + HHMMSStoSeconds(value), preference); hideModal()'>
             Submit
         </button>
 
     </modal-dialog>
     <modal-dialog show='showSettings' width='750px' height='90%'>
-
         <h3 style="text-align: center"> Swipe Settings </h3>
 
         <div ng-repeat="(key, value) in userPreferences">
 
-            <div>
+            <h4>
                 {{key.replace('_i','').replace('_s', '')}} :
-            </div>
+            </h4>
 
-            <div ng-repeat="x in value.like" style="border: thin green solid" class="fit">
-                {{x}}
+            <div ng-repeat="x in value.like" style="border: thin green solid; margin-right: 3px" class="fit pill btn">
+                {{key.indexOf('time') !== -1 ? secondsToHHMMSS(x, true) : x}}
                 <button ng-click='removePreference(key, $index, "like")'> x</button>
             </div>
 
-            <div ng-repeat="x in value.dislike" style="border: thin red solid" class="fit">
-                {{x}}
-                <button ng-click='removePreference(key, $index, "dislike")'> x</button>
+            <div ng-repeat="x in value.dislike" style="border: thin red solid; margin-right: 3px" class="fit pill btn">
+                {{key.indexOf('time') !== -1 ? secondsToHHMMSS(x, true) : x}}
+                <button ng-click='removePreference(key, $index, "dislike")'>x</button>
             </div>
 
             <br>
         </div>
+        <br/>
         <h4> Play new stream every: </h4>
-        <input type="text" ng-model="changeTime.num"/><br/>
+        <input class="col-md-1" type="text" ng-model="changeTime.num"/> <h4 class="col-md-1" style="margin-top:2px">
+        seconds</h4>
         <style>
             .swipeSettings button {
                 text-align: right;
@@ -131,6 +158,7 @@
         </style>
 
     </modal-dialog>
+    {{embedURL}}
 </div>
 
 <script>
@@ -148,7 +176,7 @@
                         additionalParameters: 'autoplay=true'
                     },
                     YouTube: {
-                        additionalParameters: 'autoplay=1&controls=0'
+                        additionalParameters: 'autoplay=1&controls=1'
                     },
                     Dailymotion: {
                         additionalParameters: 'autoplay=1'
@@ -168,7 +196,7 @@
                 };
 
                 $scope.loadNextStream = function () {
-                    $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.random() + buildFilter()) //Prevent caching with random parameter
+                    $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter()) //Prevent caching with random parameter
                             .success(function (response) {
                                 response = response.response.content;
                                 $scope.model = {service: {name: response.service_s}};
@@ -204,7 +232,6 @@
                                 }
 
                                 resetCounter();
-                                console.log($scope.changeTime)
                             }).error(function (data, status, headers, config) {
                                 $scope.handleIncorrectResponse(status);
                             });
@@ -390,8 +417,6 @@
                     $scope.counter = $scope.changeTime.num;
                 }
 
-                $scope.loadNextStream();
-
                 $scope.onTimeout = function () {
                     if ($scope.counter === 0) {
                         $scope.loadNextStream();
@@ -401,10 +426,14 @@
                     mytimeout = $timeout($scope.onTimeout, 1000);
                 }
                 var mytimeout = $timeout($scope.onTimeout, 1000);
-                $scope.stop = function () {
-                    $timeout.cancel(mytimeout);
-                }
-                $scope.secondsToHHMMSS = function (seconds) {
+                $scope.secondsToHHMMSS = function (seconds, hasOperator) {
+                    var operator = '';
+
+                    if (hasOperator) {
+                        operator = seconds.charAt(0);
+                        seconds = seconds.replace(operator, '');
+                    }
+
                     var sec_num = parseInt(seconds, 10); // don't forget the second param
                     var hours = Math.floor(sec_num / 3600);
                     var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
@@ -420,8 +449,19 @@
                         seconds = "0" + seconds;
                     }
                     var time = hours + ':' + minutes + ':' + seconds;
-                    return time;
+                    return operator + time;
                 }
+                $scope.HHMMSStoSeconds = function (HHMMSS) {
+                    //Do we have a regex match for HHMMSS format ?
+                    if (/([0-9]+):([0-5][0-9]):([0-5][0-9])/.test(HHMMSS)) {
+                        var time = HHMMSS.split(':');
+                        return (+time[0]) * 60 * 60 + (+time[1]) * 60 + (+time[2]);
+                    } else {
+                        return HHMMSS;
+                    }
+                }
+
+                $scope.loadNextStream();
             }
     )
 
