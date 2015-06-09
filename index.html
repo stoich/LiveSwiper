@@ -158,7 +158,6 @@
         </style>
 
     </modal-dialog>
-    {{embedURL}}
 </div>
 
 <script>
@@ -182,7 +181,7 @@
                         additionalParameters: 'autoplay=1'
                     },
                     Hitbox: {
-                        additionalParameters: 'autoplay=true'
+                        additionalParameters: ''
                     },
                     Bambuser: {
                         additionalParameters: 'autoplay=1'
@@ -199,7 +198,6 @@
                     $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter()) //Prevent caching with random parameter
                             .success(function (response) {
                                 response = response.response.content;
-                                $scope.model = {service: {name: response.service_s}};
                                 $scope.response = response;
 
                                 if (response.hasOwnProperty('title')) {
@@ -236,6 +234,7 @@
                                 $scope.handleIncorrectResponse(status);
                             });
                 }
+
                 $scope.handleIncorrectResponse = function (message) {
                     //TODO - add proper error message in UI
                     console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
@@ -295,17 +294,16 @@
 
                     for (var field in $scope.userPreferences) {
                         if ($scope.userPreferences.hasOwnProperty(field)) {
-                            if (field.indexOf('_s') != -1) {
+                            var newFilter;
+
+                            if (field.indexOf('_s') != -1) { //Is field of type string?
                                 var newFilter = buildStringFilter(field.replace('_s', ''), $scope.userPreferences[field]);
-                                if (newFilter !== '') {
-                                    filter = appendFilter(filter, newFilter);
-                                }
+                            } else { //It must be of type int then
+                                var newFilter = buildIntegerFilter(field.replace('_i', '').replace('_s', ''), $scope.userPreferences[field]);
                             }
-                            if (field.indexOf('_i') != -1) {
-                                var newFilter = buildIntegerFilter(field.replace('_i', ''), $scope.userPreferences[field]);
-                                if (newFilter !== '') {
-                                    filter = appendFilter(filter, newFilter);
-                                }
+
+                            if (newFilter !== '') {
+                                filter = appendFilter(filter, newFilter);
                             }
                         }
                     }
@@ -327,7 +325,6 @@
                         var likeArray = field.like;
 
                         if (headsOrTails()) { //Should we pick from existing likes ?
-                            console.log('heads');
                             var selection = likeArray[Math.floor(Math.random() * likeArray.length)];
                             filter = fieldName + '=' + selection;
                         }
@@ -387,7 +384,6 @@
                         if (equals.length !== 0) {
                             selection = equals[Math.floor(Math.random() * equals.length)];
                         }
-
                     } else {
                         var floor = '*';
                         var ceiling = '*';
@@ -409,23 +405,23 @@
                     var empty = current.length === 0;
                     return current + (empty ? '' : ',') + newFilter;
                 }
+
                 //50% chance to return true or false
                 var headsOrTails = function () {
-                    return Math.floor(Math.random() * 2) == 0 ? true : false;
+                    return Math.floor(Math.random() * 2) == 0;
                 }
                 var resetCounter = function () {
                     $scope.counter = $scope.changeTime.num;
                 }
-
-                $scope.onTimeout = function () {
+                var updateCounter = function () {
                     if ($scope.counter === 0) {
                         $scope.loadNextStream();
+                    } else {
+                        $scope.counter--;
                     }
-
-                    $scope.counter--;
-                    mytimeout = $timeout($scope.onTimeout, 1000);
+                    $timeout(updateCounter, 1000);
                 }
-                var mytimeout = $timeout($scope.onTimeout, 1000);
+
                 $scope.secondsToHHMMSS = function (seconds, hasOperator) {
                     var operator = '';
 
@@ -461,7 +457,12 @@
                     }
                 }
 
-                $scope.loadNextStream();
+                var initializeApp = function () {
+                    $timeout(updateCounter, 1000); //Start counter;
+                    $scope.loadNextStream(); //Load the first stream;
+                }
+
+                initializeApp();
             }
     )
 
@@ -476,12 +477,10 @@
             }
         }
     });
-
 </script>
 
 <script src="streamInfo/directive.js"></script>
 <script src="modal/directive.js"></script>
-<script src="swipeSettings/directive.js"></script>
 
 </body>
 </html>
