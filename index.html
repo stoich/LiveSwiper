@@ -99,13 +99,13 @@
 
     <modal-dialog show='showModal' width='500px' height='300px'>
 
-        <h3 class="col-md-12">Please specify a condition regarding <b>{{field.replace('_i','')}}</b> that
+        <h3 class="col-md-12">Please specify a condition regarding <b>{{removeType(field)}}</b> that
             you {{preference}}:</h3>
         <br>
         <hr class="col-md-12">
         <br>
 
-        <p class="col-md-2 selectLabel">{{field.replace('_s','').replace('_i','')}}</p>
+        <p class="col-md-2 selectLabel">{{removeType(field)}}</p>
         <select class='col-md-2 dropdown' ng-model="model.id" ng-selected="$first">
             <option value="="> =</option>
             <option value=">"> ></option>
@@ -127,7 +127,7 @@
         <div ng-repeat="(key, value) in userPreferences">
 
             <h4>
-                {{key.replace('_i','').replace('_s', '')}} :
+                {{removeType(key)}} :
             </h4>
 
             <div ng-repeat="x in value.like" style="border: thin green solid; margin-right: 3px" class="fit pill btn">
@@ -193,7 +193,6 @@
                 $scope.changeTime = {
                     num: 360
                 };
-
                 $scope.loadNextStream = function () {
                     $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter()) //Prevent caching with random parameter
                             .success(function (response) {
@@ -206,39 +205,17 @@
                                     console.log('Stream response did not contain a title');
                                     $scope.title = 'Unknown Stream';
                                 }
+
                                 if (response.hasOwnProperty('webEmbedURL_s')) {
-                                    var streamUrl = response.webEmbedURL_s;
-
-                                    if (serviceConfiguration.hasOwnProperty(response.service_s)) {
-                                        $scope.service = response.service_s
-
-
-                                        var serviceConfig = serviceConfiguration[response.service_s];
-
-                                        if (serviceConfig.hasOwnProperty('getCustomUrl')) {
-                                            streamUrl = serviceConfig.getCustomUrl(response);
-                                        }
-
-                                        var join = streamUrl.indexOf('?') === -1 ? '?' : '&';
-                                        streamUrl = streamUrl + join + serviceConfig.additionalParameters;
-                                    }
-
-                                    $scope.embedURL = $sce.trustAsResourceUrl(streamUrl);
-                                    $scope.user = response.username_s;
+                                    $scope.embedURL = $sce.trustAsResourceUrl(buildStreamURL(response, serviceConfiguration));
                                 } else {
-                                    $scope.handleIncorrectResponse('missing web webEmbedURL_s')
+                                    handleIncorrectResponse('missing web webEmbedURL_s')
                                 }
 
                                 resetCounter();
                             }).error(function (data, status, headers, config) {
-                                $scope.handleIncorrectResponse(status);
+                                handleIncorrectResponse(status);
                             });
-                }
-
-                $scope.handleIncorrectResponse = function (message) {
-                    //TODO - add proper error message in UI
-                    console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
-                    $scope.loadNextStream();
                 }
                 $scope.buildCustomPreference = function (field, value, preference) {
                     console.log(preference);
@@ -288,7 +265,52 @@
                 $scope.hideModal = function () {
                     $scope.showModal = false;
                 };
+                $scope.removeType = function (field) {
+                    if (typeof field !== 'undefined') {
+                        return field.replace('_s', '').replace('_i', '');
+                    }
+                    return '';
+                }
+                $scope.secondsToHHMMSS = function (seconds, hasOperator) {
+                    var operator = '';
 
+                    if (hasOperator) {
+                        operator = seconds.charAt(0);
+                        seconds = seconds.replace(operator, '');
+                    }
+
+                    var sec_num = parseInt(seconds, 10); // don't forget the second param
+                    var hours = Math.floor(sec_num / 3600);
+                    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+                    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+                    if (hours < 10) {
+                        hours = "0" + hours;
+                    }
+                    if (minutes < 10) {
+                        minutes = "0" + minutes;
+                    }
+                    if (seconds < 10) {
+                        seconds = "0" + seconds;
+                    }
+                    var time = hours + ':' + minutes + ':' + seconds;
+                    return operator + time;
+                }
+                $scope.HHMMSStoSeconds = function (HHMMSS) {
+                    //Do we have a regex match for HHMMSS format ?
+                    if (/([0-9]+):([0-5][0-9]):([0-5][0-9])/.test(HHMMSS)) {
+                        var time = HHMMSS.split(':');
+                        return (+time[0]) * 60 * 60 + (+time[1]) * 60 + (+time[2]);
+                    } else {
+                        return HHMMSS;
+                    }
+                }
+
+                var handleIncorrectResponse = function (message) {
+                    //TODO - add proper error message in UI
+                    console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
+                    $scope.loadNextStream();
+                }
                 var buildFilter = function () {
                     var filter = '';
 
@@ -296,10 +318,12 @@
                         if ($scope.userPreferences.hasOwnProperty(field)) {
                             var newFilter;
 
-                            if (field.indexOf('_s') != -1) { //Is field of type string?
-                                var newFilter = buildStringFilter(field.replace('_s', ''), $scope.userPreferences[field]);
-                            } else { //It must be of type int then
-                                var newFilter = buildIntegerFilter(field.replace('_i', '').replace('_s', ''), $scope.userPreferences[field]);
+                            if (getType(field) === 'string') {
+                                newFilter = buildStringFilter($scope.removeType(field), $scope.userPreferences[field]);
+                            }
+
+                            if (getType(field) === 'int') {
+                                newFilter = buildIntegerFilter($scope.removeType(field), $scope.userPreferences[field]);
                             }
 
                             if (newFilter !== '') {
@@ -405,7 +429,27 @@
                     var empty = current.length === 0;
                     return current + (empty ? '' : ',') + newFilter;
                 }
+                var buildStreamURL = function (response, serviceConfiguration) {
+                    var service = response.service_s;
+                    var url = response.webEmbedURL_s;
 
+                    if (serviceConfiguration.hasOwnProperty(service)) {
+                        //$scope.service = response.service_s
+                        var serviceConfig = serviceConfiguration[service];
+
+                        if (serviceConfig.hasOwnProperty('getCustomUrl')) {
+                            url = serviceConfig.getCustomUrl(response);
+                        }
+
+                        var join = url.indexOf('?') === -1 ? '?' : '&';
+                        return url + join + serviceConfig.additionalParameters;
+                    }
+
+                    return url;
+                }
+                var getType = function (field) {
+                    return field.indexOf('_s') !== -1 ? 'string' : 'int';
+                }
                 //50% chance to return true or false
                 var headsOrTails = function () {
                     return Math.floor(Math.random() * 2) == 0;
@@ -420,41 +464,6 @@
                         $scope.counter--;
                     }
                     $timeout(updateCounter, 1000);
-                }
-
-                $scope.secondsToHHMMSS = function (seconds, hasOperator) {
-                    var operator = '';
-
-                    if (hasOperator) {
-                        operator = seconds.charAt(0);
-                        seconds = seconds.replace(operator, '');
-                    }
-
-                    var sec_num = parseInt(seconds, 10); // don't forget the second param
-                    var hours = Math.floor(sec_num / 3600);
-                    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-                    var seconds = sec_num - (hours * 3600) - (minutes * 60);
-
-                    if (hours < 10) {
-                        hours = "0" + hours;
-                    }
-                    if (minutes < 10) {
-                        minutes = "0" + minutes;
-                    }
-                    if (seconds < 10) {
-                        seconds = "0" + seconds;
-                    }
-                    var time = hours + ':' + minutes + ':' + seconds;
-                    return operator + time;
-                }
-                $scope.HHMMSStoSeconds = function (HHMMSS) {
-                    //Do we have a regex match for HHMMSS format ?
-                    if (/([0-9]+):([0-5][0-9]):([0-5][0-9])/.test(HHMMSS)) {
-                        var time = HHMMSS.split(':');
-                        return (+time[0]) * 60 * 60 + (+time[1]) * 60 + (+time[2]);
-                    } else {
-                        return HHMMSS;
-                    }
                 }
 
                 var initializeApp = function () {
