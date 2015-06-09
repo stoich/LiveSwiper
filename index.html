@@ -22,7 +22,7 @@
 
     <div class="col-md-3 streamInfo sidebar" style="z-index: 1; float: left;">
         <br>
-
+        
         <stream-Info
                 info='{field: "service_s", value: response.service_s,  src:"img/" +  response.service_s + ".png"}'
                 add-pref='addPreference(field, value, preference)'>
@@ -91,7 +91,7 @@
         <p style="text-align:left" class="col-md-8 lead title">{{title}}</p>
 
         <div class="col-md-4 buttons">
-            <button ng-click="loadNextStream()" class="btn btn-primary" style="text-align: left">Next
+            <button ng-click="loadNextStream(userPreferences)" class="btn btn-primary" style="text-align: left">Next
                 Stream
             </button>
         </div>
@@ -193,8 +193,9 @@
                 $scope.changeTime = {
                     num: 360
                 };
-                $scope.loadNextStream = function () {
-                    $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter()) //Prevent caching with random parameter
+
+                $scope.loadNextStream = function (userPreferences) {
+                    $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter(userPreferences)) //Prevent caching with random parameter
                             .success(function (response) {
                                 response = response.response.content;
                                 $scope.response = response;
@@ -311,19 +312,19 @@
                     console.log('There was a problem with current service json response: ' + message + ' . Loading next stream.');
                     $scope.loadNextStream();
                 }
-                var buildFilter = function () {
+                var buildFilter = function (userPreferences) {
                     var filter = '';
 
-                    for (var field in $scope.userPreferences) {
-                        if ($scope.userPreferences.hasOwnProperty(field)) {
+                    for (var field in userPreferences) {
+                        if (userPreferences.hasOwnProperty(field)) {
                             var newFilter;
 
                             if (getType(field) === 'string') {
-                                newFilter = buildStringFilter($scope.removeType(field), $scope.userPreferences[field]);
+                                newFilter = buildStringFilter($scope.removeType(field), userPreferences[field]);
                             }
 
                             if (getType(field) === 'int') {
-                                newFilter = buildIntegerFilter($scope.removeType(field), $scope.userPreferences[field]);
+                                newFilter = buildIntegerFilter($scope.removeType(field), userPreferences[field]);
                             }
 
                             if (newFilter !== '') {
@@ -465,13 +466,12 @@
                     }
                     $timeout(updateCounter, 1000);
                 }
-
-                var initializeApp = function () {
+                var initializeApp = function (userPreferences) {
                     $timeout(updateCounter, 1000); //Start counter;
-                    $scope.loadNextStream(); //Load the first stream;
+                    $scope.loadNextStream(userPreferences); //Load the first stream;
                 }
 
-                initializeApp();
+                initializeApp($scope.userPreferences);
             }
     )
 
