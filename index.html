@@ -14,6 +14,7 @@
 
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
+    <script src="js/angular-local-storage.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
 
 </head>
@@ -22,7 +23,7 @@
 
     <div class="col-md-3 streamInfo sidebar" style="z-index: 1; float: left;">
         <br>
-        
+
         <stream-Info
                 info='{field: "service_s", value: response.service_s,  src:"img/" +  response.service_s + ".png"}'
                 add-pref='addPreference(field, value, preference)'>
@@ -161,8 +162,8 @@
 </div>
 
 <script>
-    var app = angular.module('LiveSwiper', []);
-    app.controller('customersCtrl', function ($scope, $sce, $http, $timeout) {
+    var app = angular.module('LiveSwiper', ['LocalStorageModule']);
+    app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localStorageService) {
                 $scope.userPreferences = {};
                 var serviceConfiguration = {
                     Twitch: {
@@ -193,6 +194,7 @@
                 $scope.changeTime = {
                     num: 360
                 };
+                var PREFERENCE_STORAGE_KEY = 'LiveSwiperStorage';
 
                 $scope.loadNextStream = function (userPreferences) {
                     $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter(userPreferences)) //Prevent caching with random parameter
@@ -240,6 +242,8 @@
                         thisField[preference].push(value);
                     }
 
+                    commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
+
                     console.log(field);
                     console.log(value);
                     console.log(preference);
@@ -259,6 +263,7 @@
                         delete $scope.userPreferences[field];
                     }
 
+                    commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
                 }
                 $scope.openSettings = function () {
                     $scope.showSettings = true;
@@ -448,6 +453,12 @@
 
                     return url;
                 }
+                var commitToStorage = function (key, model) {
+                    localStorageService.set(key, model);
+                }
+                var retrieveFromStorage = function (key) {
+                    return localStorageService.get(key);
+                }
                 var getType = function (field) {
                     return field.indexOf('_s') !== -1 ? 'string' : 'int';
                 }
@@ -466,12 +477,16 @@
                     }
                     $timeout(updateCounter, 1000);
                 }
-                var initializeApp = function (userPreferences) {
+                var initializeApp = function () {
+                    if (localStorageService.keys().indexOf(PREFERENCE_STORAGE_KEY) !== -1) {
+                        $scope.userPreferences = retrieveFromStorage(PREFERENCE_STORAGE_KEY);
+                    }
+
                     $timeout(updateCounter, 1000); //Start counter;
-                    $scope.loadNextStream(userPreferences); //Load the first stream;
+                    $scope.loadNextStream($scope.userPreferences); //Load the first stream;
                 }
 
-                initializeApp($scope.userPreferences);
+                initializeApp();
             }
     )
 
