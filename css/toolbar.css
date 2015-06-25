@@ -10,12 +10,13 @@
         margin-top: 4px;
     }
 
-    .label1{
-        text-align: center;
+    .title {
+        font-size: 175%;
     }
 
-    .title {
-        font-size:175%;
+    #toolbar {
+        width: 100%;
+        margin-left: 0%;
     }
 }
 
@@ -38,12 +39,55 @@
         text-align: right;
     }
 
-    .label1 {
-        text-align: left;
+    #toolbar {
+        width: 50%;
+        margin-left: 25%;
     }
+}
+
+#description {
+    border: 2px #dadada solid;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    text-align: left;
+    padding: 1%;
+    border-top: none;
+    background-color: #f5f5f5;
+    margin-bottom: 5%;
 }
 
 #swipeSettingsIcon:hover {
     opacity: 0.4;
     filter: alpha(opacity=100); /* For IE8 and earlier */
 }
+
+.btn-rounded {
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 130%;
+    padding-top: 2%;
+    padding-bottom: 2%;
+}
+
+#btn-shuffle {
+    background-color: #2a2a2a;
+    color: white;
+    padding-left: 20%;
+    padding-right: 20%;
+}
+
+.btn-preference-dislike {
+    background-color: #d0482e;
+    color: white;
+    padding-left: 8%;
+    padding-right: 8%;
+}
+
+.btn-preference-like {
+    background-color: #37c92d;
+    color: white;
+    padding-left: 9%;
+    padding-right: 9%;
+}
+
+
