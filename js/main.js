@@ -30,8 +30,17 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             }
         }
 
-        $scope.viewersMax = 100;
+
+        $scope.increment = 100;
+        $scope.initialValue = 10;
+
+        $scope.viewersMax = $scope.initialValue;
+        $scope.viewersStep = 1;
         $scope.viewersRebind = false;
+
+        $scope.uptimeMax = $scope.initialValue;
+        $scope.uptimeStep = 1;
+        $scope.uptimeRebind = false;
 
         $scope.userPreferences = {};
         $scope.showSettings = true;
@@ -40,15 +49,55 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             num: 360
         };
 
-        $scope.evaluateViewsForRebinding = function (value, max) {
-            if (value === max) {
-                $scope.viewersMax = value * 10;
-                $scope.viewersRebind = true;
-            } else {
-                $scope.viewersRebind = false;
-            }
-        };
+        $scope.tooltipTemplate = '#if (selectionStart >= 1000) {#' +
+            '#= selectionStart/1000#K ' +
+            '#} else {#' +
+            '#= selectionStart #' +
+            '#}#' +
+            ' - ' +
+            '#if (selectionEnd === 10000000) {#' +
+            'infinity' +
+            '#} else {#' +
 
+            '#if (selectionEnd >= 1000) {#' +
+            '#= selectionEnd/1000#K ' +
+            '#} else {#' +
+            '#= selectionEnd #' +
+            '#}#' +
+
+            '#}#';
+
+        $scope.evaluateForRebinding = function (value, max, rebind, increment) {
+
+            //Increase scale
+            if (value === max && value < 1000000) {
+                $scope[rebind + 'Max'] = value * increment;
+                $scope[rebind + 'Step'] *= increment;
+                $scope[rebind + 'Rebind'] = true;
+                $timeout(function () {
+                    $scope[rebind + 'Rebind'] = false;
+                }, 500)
+
+                return null;
+            }
+
+            //Decrease scale
+            if (value === 0 && max > 10) {
+                $scope[rebind + 'Max'] /= increment;
+                console.log($scope[rebind + 'Max']);
+                $scope[rebind + 'Step'] /= increment;
+                console.log(rebind + 'Step');
+                $scope[rebind + 'Rebind'] = true;
+                $timeout(function () {
+                    $scope[rebind + 'Rebind'] = false;
+                }, 500)
+
+                return null;
+            }
+
+            $scope[rebind + 'Rebind'] = false;
+            return null;
+        };
         $scope.loadNextStream = function (userPreferences) {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter(userPreferences)) //Prevent caching with random parameter
                 .success(function (response) {

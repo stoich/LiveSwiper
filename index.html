@@ -92,19 +92,26 @@
             </div>
 
             <div class="col-md-5 settingsColumn" style="color:red; margin-bottom:4% ">
-                <h6>Viewers</h6>
+                <h6>Viewers <b>{{viewers}}</b></h6>
 
-                <div kendo-range-slider ng-model="viewers" k-tooltip="{ enabled: true }" k-tick-placement="'none'"
-                     k-max="viewersMax" k-on-change="evaluateViewsForRebinding(viewers[1], viewersMax, viewersRebind)"
-                     k-rebind="viewersRebind" k-selection-end="viewersMax/10"
+                <div kendo-range-slider ng-model="viewers" k-tooltip="{ enabled: true, template: tooltipTemplate}" k-tick-placement="'none'"
+                     k-max="viewersMax" k-on-change='evaluateForRebinding(viewers[1], viewersMax, "viewers", increment)'
+                     k-rebind="viewersRebind"
+                     k-selection-end="viewersMax === initialValue ? viewersMax/2 : viewersMax/increment"
+                     k-small-step="viewersStep"
                      class="slider">
                     <input>
                     <input ng-model="test">
                 </div>
 
-                <h6>Uptime</h6>
+                <h6>Uptime <b> {{uptime}} </b></h6>
 
-                <div kendo-range-slider ng-model="uptime" k-tooltip="{ enabled: true,  }" k-tick-placement="'none'"
+                <div kendo-range-slider ng-model="uptime" k-tooltip='{ enabled: true, template: tooltipTemplate}'
+                     k-tick-placement="'none'"
+                     k-max="uptimeMax" k-on-change='evaluateForRebinding(uptime[1], uptimeMax, "uptime", increment)'
+                     k-rebind="uptimeRebind"
+                     k-selection-end="uptimeMax === initialValue ? uptimeMax/2 : uptimeMax/increment"
+                     k-small-step="uptimeStep"
                      class="slider">
                     <input>
                     <input ng-model="test">
@@ -127,6 +134,24 @@
 <script src="js/main.js"></script>
 <script src="streamInfo/directive.js"></script>
 <script src="modal/directive.js"></script>
+<script>
+
+    $(document).ready(function () {
+        start();
+    });
+
+    //Hacky workaround for a bug in Kendo Slider where tooltip doesn't go away when scaling down
+    function start() {
+        var tooltip = $('.k-tooltip');
+
+        if (tooltip.length !== 0 && tooltip.text() === '0 - 0') {
+            tooltip.remove();
+        }
+
+        setTimeout(start, 1000);
+    }
+
+</script>
 
 </body>
 </html>
