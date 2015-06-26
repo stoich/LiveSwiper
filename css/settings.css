@@ -1,0 +1,74 @@
+.bigDropDown {
+    height: 25%;
+    /*   padding: 1%;*/
+    width: 80%;
+    padding-top: 0px;
+
+}
+
+.smallDropDown {
+    margin-bottom: 10%;
+    width: 100%;
+}
+
+h6 {
+    margin-bottom: 0px;
+    margin-top: 0px;
+    color: #5e5e5e;
+}
+
+.settingsColumn {
+    text-align: center;
+}
+
+.slider {
+    width: 100%;
+}
+
+/*THE DROPDOWNS*/
+
+.k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
+    background-color: #161616;
+    border: none;
+}
+
+.k-dropdown .k-input, .k-dropdown .k-state-focused .k-input, .k-menu .k-popup {
+    color: white;
+}
+
+.k-item {
+background-color: #161616;
+color: white;
+    text-align: center;
+}
+
+.k-list, .k-reset {
+    background-color: #161616;
+    border: none;
+}
+
+.k-block, .k-widget {
+    background-color: #161616;
+}
+
+/*SLIDERS*/
+
+.k-slider-selection {
+    background-color: #37c92d;
+}
+
+.k-slider-track {
+    background-color: #161616;
+}
+
+.k-slider-wrapper, .k-slider-selection, .k-slider-track {
+    border: none;
+}
+
+.k-draghandle {
+    background-color: white;
+}
+
+.k-tooltip {
+
+}

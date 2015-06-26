@@ -1,0 +1,23 @@
+#site-header {
+    text-align: center;
+    background-color: #2a2a2a;
+    padding: 1%;
+}
+html {
+    position: relative;
+    min-height: 100%;
+}
+body {
+    margin: 0 0 100px;
+}
+#site-footer {
+    text-align: center;
+    background-color: #2a2a2a;
+    padding: 45px;
+    color: #3e3e3e;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 100px;
+    width: 100%;
+}

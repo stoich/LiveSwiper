@@ -10,29 +10,36 @@
     <link rel="stylesheet" href="css/streamBox.css">
     <link rel="stylesheet" href="css/toolbar.css">
     <link rel="stylesheet" href="css/modal.css">
-    <link rel="stylesheet" href="css/select.css">
+    <link rel="stylesheet" href="css/navBars.css">
+
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.2.624/styles/kendo.common-bootstrap.min.css"/>
+    <link rel="stylesheet" href="http://cdn.kendostatic.com/2015.2.624/styles/kendo.bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/settings.css">
 
     <script src="js/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
     <script src="js/angular-local-storage.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="http://cdn.kendostatic.com/2015.2.624/js/kendo.all.min.js"></script>
 
 </head>
 <body style="background-color: #3e3e3e">
-<div ng-app="LiveSwiper" ng-controller="customersCtrl" resize ng-cloak>
 
-    <div class="videoWrapper" style="z-index: 0;">
+<div id="site-header">
+    <img style="height: 40px; " src="img/Liveguide_Logotype.svg">
+</div>
+
+<div ng-app="LiveSwiper" ng-controller="customersCtrl" resize ng-cloak>
+    <div class="videoWrapper" style="z-index: 0; ">
         <iframe ng-src="{{embedURL}}" frameborder="0" allowfullscreen class="center-block" style="background: black;">
             Your browser does not support Iframes
         </iframe>
     </div>
     <section id="toolbar" style="text-align: center">
-
         <div id="description">
             {{title}}
         </div>
-
-        <div id="button-group">
+        <div id="button-group" ng-show="!showSettings">
             <button ng-click="loadNextStream(userPreferences)" class="btn btn-rounded" id="btn-shuffle">
                 Shuffle
             </button>
@@ -42,10 +49,80 @@
                     Dislike
                 </button>
             </div>
-            <img style="background-color: #2a2a2a; border-radius: 50%; padding: 2%; margin-top:2%" src="img/LiveguideSwipe_Configure_Icon.png"/>
+
+        </div>
+        <div id="settings" ng-show="showSettings">
+
+            <div class="col-md-5 settingsColumn">
+                <h6>Categories</h6>
+                <select kendo-drop-down-list class="bigDropDown" k-height="500">
+                    <option>All</option>
+                    <option>News</option>
+                    <option>Gaming</option>
+                    <option>Sports</option>
+                    <option>Music</option>
+                    <option>Tech</option>
+                    <option>Nature</option>
+                </select>
+
+
+                <h6>Language</h6>
+                <select kendo-drop-down-list class="bigDropDown">
+                    <option>All</option>
+                    <option>News</option>
+                    <option>Gaming</option>
+                    <option>Sports</option>
+                    <option>Music</option>
+                    <option>Tech</option>
+                    <option>Nature</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 settingsColumn">
+                <h6>Shuffle timer</h6>
+                <select kendo-drop-down-list class="smallDropDown">
+                    <option>All</option>
+                    <option>News</option>
+                    <option>Gaming</option>
+                    <option>Sports</option>
+                    <option>Music</option>
+                    <option>Tech</option>
+                    <option>Nature</option>
+                </select>
+            </div>
+
+            <div class="col-md-5 settingsColumn" style="color:red; margin-bottom:4% ">
+                <h6>Viewers</h6>
+
+                <div kendo-range-slider ng-model="viewers" k-tooltip="{ enabled: true }" k-tick-placement="'none'"
+                     k-max="viewersMax" k-on-change="evaluateViewsForRebinding(viewers[1], viewersMax, viewersRebind)"
+                     k-rebind="viewersRebind" k-selection-end="viewersMax/10"
+                     class="slider">
+                    <input>
+                    <input ng-model="test">
+                </div>
+
+                <h6>Uptime</h6>
+
+                <div kendo-range-slider ng-model="uptime" k-tooltip="{ enabled: true,  }" k-tick-placement="'none'"
+                     class="slider">
+                    <input>
+                    <input ng-model="test">
+                </div>
+            </div>
+
+        </div>
+        <div id="settingsToggleButton" style="text-align: center; ">
+            <img ng-click='toggleSettings(showSettings)'
+                 style="background-color: #2a2a2a; border-radius: 50%; padding: 2%; margin-top:2%; margin-bottom:2%"
+                 src='{{settingsIcon}}'/>
         </div>
     </section>
 </div>
+
+<footer id="site-footer">
+    Liveguide © 2015
+</footer>
 
 <script src="js/main.js"></script>
 <script src="streamInfo/directive.js"></script>

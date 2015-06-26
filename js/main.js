@@ -1,6 +1,8 @@
-var app = angular.module('LiveSwiper', ['LocalStorageModule']);
+var app = angular.module('LiveSwiper', ['LocalStorageModule', "kendo.directives"]);
 app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localStorageService) {
-        $scope.userPreferences = {};
+        var PREFERENCE_STORAGE_KEY = 'LiveSwiperStorage';
+        var OPEN_SETTINGS_ICON_SRC = 'img/LiveguideSwipe_Configure_Icon.png';
+        var CLOSE_SETTINGS_ICON_SRC = 'img/LiveguideSwipe_Configure_Close_Icon.png';
         var serviceConfiguration = {
             Twitch: {
                 additionalParameters: '',
@@ -27,10 +29,25 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
                 additionalParameters: ''
             }
         }
+
+        $scope.viewersMax = 100;
+        $scope.viewersRebind = false;
+
+        $scope.userPreferences = {};
+        $scope.showSettings = true;
+        $scope.settingsIcon = OPEN_SETTINGS_ICON_SRC;
         $scope.changeTime = {
             num: 360
         };
-        var PREFERENCE_STORAGE_KEY = 'LiveSwiperStorage';
+
+        $scope.evaluateViewsForRebinding = function (value, max) {
+            if (value === max) {
+                $scope.viewersMax = value * 10;
+                $scope.viewersRebind = true;
+            } else {
+                $scope.viewersRebind = false;
+            }
+        };
 
         $scope.loadNextStream = function (userPreferences) {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter(userPreferences)) //Prevent caching with random parameter
@@ -101,12 +118,15 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
 
             commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
         }
-        $scope.openSettings = function () {
-            $scope.showSettings = true;
+        $scope.toggleSettings = function (open) {
+            if (open) {
+                $scope.showSettings = false;
+                $scope.settingsIcon = OPEN_SETTINGS_ICON_SRC;
+            } else {
+                $scope.showSettings = true;
+                $scope.settingsIcon = CLOSE_SETTINGS_ICON_SRC;
+            }
         }
-        $scope.hideModal = function () {
-            $scope.showModal = false;
-        };
         $scope.removeType = function (field) {
             if (typeof field !== 'undefined') {
                 return field.replace('_s', '').replace('_i', '');
