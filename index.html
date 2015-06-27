@@ -21,7 +21,6 @@
     <script src="js/angular-local-storage.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="http://cdn.kendostatic.com/2015.2.624/js/kendo.all.min.js"></script>
-
 </head>
 <body style="background-color: #3e3e3e">
 
@@ -52,49 +51,52 @@
 
         </div>
         <div id="settings" ng-show="showSettings">
-
-            <div class="col-md-5 settingsColumn">
+            <div id="overlay" class="col-md-12">
+            </div>
+            <div class="col-md-4 settingsColumn">
                 <h6>Categories</h6>
-                <select kendo-drop-down-list class="bigDropDown" k-height="500">
+                <select kendo-drop-down-list ng-model="categories" class="bigDropDown" k-height="500">
                     <option>All</option>
-                    <option>News</option>
+                    <option>Entertainment</option>
                     <option>Gaming</option>
                     <option>Sports</option>
-                    <option>Music</option>
                     <option>Tech</option>
                     <option>Nature</option>
                 </select>
-
 
                 <h6>Language</h6>
-                <select kendo-drop-down-list class="bigDropDown">
+                <select kendo-drop-down-list ng-model="language" class="bigDropDown">
                     <option>All</option>
-                    <option>News</option>
-                    <option>Gaming</option>
-                    <option>Sports</option>
-                    <option>Music</option>
-                    <option>Tech</option>
-                    <option>Nature</option>
+                    <option>en</option>
+                    <option>fr</option>
+                    <option>pl</option>
+                    <option>ru</option>
+                    <option>asian</option>
+                    <option>de</option>
                 </select>
             </div>
-
+            <div class="col-md-1 settingsColumn"></div>
             <div class="col-md-2 settingsColumn">
                 <h6>Shuffle timer</h6>
-                <select kendo-drop-down-list class="smallDropDown">
-                    <option>All</option>
-                    <option>News</option>
-                    <option>Gaming</option>
-                    <option>Sports</option>
-                    <option>Music</option>
-                    <option>Tech</option>
-                    <option>Nature</option>
+                <select kendo-drop-down-list ng-model="time" class="smallDropDown">
+                    <option>5min</option>
+                    <option>10min</option>
+                    <option>15min</option>
+                    <option>20min</option>
+                    <option>30min</option>
+                    <option>60min</option>
+                    <option>1h 30min</option>
                 </select>
+                <img id="confirmButton" ng-click="applySettings()"
+                     style="background-color: #020202; border-radius: 50%; padding: 4%; margin-top:15px; "
+                     src="img/LiveguideSwipe_Configure_CheckMarkActive_Icon.png"/>
             </div>
-
-            <div class="col-md-5 settingsColumn" style="color:red; margin-bottom:4% ">
+            <div class="col-md-1 settingsColumn"></div>
+            <div class="col-md-4 settingsColumn" style="color:red; margin-bottom:4% ">
                 <h6>Viewers <b>{{viewers}}</b></h6>
 
-                <div kendo-range-slider ng-model="viewers" k-tooltip="{ enabled: true, template: tooltipTemplate}" k-tick-placement="'none'"
+                <div kendo-range-slider="viewersSlider" ng-model="viewers" k-scope-field="viewersSlider"
+                     k-tooltip="{ enabled: true, template: tooltipTemplate}" k-tick-placement="'none'"
                      k-max="viewersMax" k-on-change='evaluateForRebinding(viewers[1], viewersMax, "viewers", increment)'
                      k-rebind="viewersRebind"
                      k-selection-end="viewersMax === initialValue ? viewersMax/2 : viewersMax/increment"
@@ -106,7 +108,8 @@
 
                 <h6>Uptime <b> {{uptime}} </b></h6>
 
-                <div kendo-range-slider ng-model="uptime" k-tooltip='{ enabled: true, template: tooltipTemplate}'
+                <div kendo-range-slider="uptimeSlider" ng-model="uptime"
+                     k-tooltip='{ enabled: true, template: tooltipTemplate}'
                      k-tick-placement="'none'"
                      k-max="uptimeMax" k-on-change='evaluateForRebinding(uptime[1], uptimeMax, "uptime", increment)'
                      k-rebind="uptimeRebind"

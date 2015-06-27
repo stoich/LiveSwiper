@@ -30,7 +30,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             }
         }
 
-
+        /* Variables related to the sliders */
         $scope.increment = 100;
         $scope.initialValue = 10;
 
@@ -42,6 +42,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
         $scope.uptimeStep = 1;
         $scope.uptimeRebind = false;
 
+        /* Variable related to the user settings as a whole */
         $scope.userPreferences = {};
         $scope.showSettings = true;
         $scope.settingsIcon = OPEN_SETTINGS_ICON_SRC;
@@ -98,9 +99,38 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             $scope[rebind + 'Rebind'] = false;
             return null;
         };
+        $scope.applySettings = function () {
+
+            var preferences = [];
+            preferences.push(['category_s', $scope.categories, 'like']);
+            preferences.push(['language_s', $scope.language, 'like']);
+
+            preferences.push(['viewers_i', '>' + $scope.viewers[0], 'like']);
+            preferences.push(['viewers_i', '<' + $scope.viewers[1], 'like']);
+
+            preferences.push(['uptime_i', '>' + $scope.uptime[0] * 60, 'like']);
+            preferences.push(['uptime_i', '<' + $scope.uptime[1] * 60, 'like']);
+
+            console.log($scope.viewers);
+            console.log($scope.uptime);
+
+            for (i = 0; i < preferences.length; i++) {
+                var currentPref = preferences[i];
+
+                if (currentPref[1] !== 'All') {
+                    this.addPreference(currentPref[0], currentPref[1].toLowerCase(), currentPref[2]);
+                }
+            }
+        }
+
         $scope.loadNextStream = function (userPreferences) {
             $http.get("http://api.liveguide.li/getRandomStream" + '?a=' + Math.floor((Math.random() * 1000) + 1) + buildFilter(userPreferences)) //Prevent caching with random parameter
                 .success(function (response) {
+
+                    if (!response.response.hasOwnProperty('content')) {
+                        alert('No streams could be found matching current swipe settings');
+                    }
+
                     response = response.response.content;
                     $scope.response = response;
 
@@ -151,6 +181,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             console.log(preference);
             console.log($scope.userPreferences);
         }
+
         $scope.removePreference = function (field, index, preference) {
             var fullPreference = $scope.userPreferences[field];
             var currentPreference = $scope.userPreferences[field][preference];
@@ -167,6 +198,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
 
             commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
         }
+
         $scope.toggleSettings = function (open) {
             if (open) {
                 $scope.showSettings = false;
@@ -216,6 +248,12 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
                 return HHMMSS;
             }
         }
+        $scope.$watch(function () { //Resize the Kendo Sliders
+            return window.innerWidth;
+        }, function (value) {
+            $scope.uptimeSlider.resize();
+            $scope.viewersSlider.resize();
+        });
 
         var handleIncorrectResponse = function (message) {
             //TODO - add proper error message in UI
@@ -358,6 +396,26 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
 
             return url;
         }
+
+        //Populate the settings widgets with data from localStorage
+        var setStoredFilters = function (localStorage) {
+            for (var field in localStorage) {
+                if (localStorage.hasOwnProperty(field)) {
+                    if (field === 'tag_s') {
+                        continue;
+                    }
+
+                    if (getType(field) === 'string') {
+                        $scope[field.replace('_s', '')] = localStorage[field].like[0];
+                    }
+
+                    if (getType(field) === 'int') {
+                        $scope[field.replace('_i', '')] = [parseInt(localStorage[field].like[0].replace('>', '')), parseInt(localStorage[field].like[1].replace('<', ''))];
+                    }
+                }
+            }
+        }
+
         var commitToStorage = function (key, model) {
             localStorageService.set(key, model);
         }
@@ -386,6 +444,11 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             if (localStorageService.keys().indexOf(PREFERENCE_STORAGE_KEY) !== -1) {
                 $scope.userPreferences = retrieveFromStorage(PREFERENCE_STORAGE_KEY);
             }
+
+            $timeout(function () { //Hacky workaround - need delay to wait for options to render
+                setStoredFilters($scope.userPreferences);
+            }, 1000);
+
 
             $timeout(updateCounter, 1000); //Start counter;
             $scope.loadNextStream($scope.userPreferences); //Load the first stream;

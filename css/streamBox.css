@@ -25,6 +25,10 @@
     .timer {
         margin-top:50%
     }
+
+    .col-md-1 {
+        display: none;
+    }
 }
 
 @media (min-width: 1024px) {
