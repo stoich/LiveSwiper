@@ -1,16 +1,20 @@
 #site-header {
     text-align: center;
     background-color: #2a2a2a;
-    padding: 1%;
+    padding: 1.5%;
 }
+
 html {
     position: relative;
     min-height: 100%;
 }
+
 body {
     margin: 0 0 100px;
 }
+
 #site-footer {
+    margin-top: 5px;
     text-align: center;
     background-color: #2a2a2a;
     padding: 45px;
@@ -20,4 +24,8 @@ body {
     bottom: 0;
     height: 100px;
     width: 100%;
+}
+
+#site-footer a {
+    color: #3e3e3e;
 }

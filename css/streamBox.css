@@ -12,6 +12,7 @@
         padding-bottom: 56.25%;
         padding-top: 25px;
         height: 0;
+        z-index: 0;
     }
 
     .sidebar {
@@ -35,9 +36,10 @@
     .videoWrapper iframe {
         position: absolute;
         top: 0;
-        margin-left: 25%;
-        width: 50%;
-        height: 100%;
+        margin-left: 31.25%;
+        width: 37.5%;
+        height: 75%;
+
     }
 
     .videoWrapper {
@@ -45,6 +47,7 @@
         padding-bottom: 28.125%;
         padding-top: 25px;
         height: 0;
+        z-index: 0;
     }
 
     .timer {

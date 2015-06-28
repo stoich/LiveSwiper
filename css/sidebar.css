@@ -1,0 +1,30 @@
+#sidebar {
+    float: right;
+    width: 31%;
+    height: 100%;
+    margin-top: 6.5%;
+    z-index: 5;
+}
+
+#sidebar img {
+    position: relative;
+    border-radius: 150px;
+    -webkit-border-radius: 150px;
+    -moz-border-radius: 150px;
+    margin-top: 3%;
+    z-index: 5;
+    width: 28px;
+    height: 28px;
+    /*background: url(http://link-to-your/image.jpg) no-repeat;*/
+}
+
+#sidebar a {
+    position: relative;
+    z-index: 5;
+}
+
+@media (max-width: 1024px) {
+    #sidebar {
+        display: none;
+    }
+}

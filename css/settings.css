@@ -1,3 +1,15 @@
+@media (min-width: 1024px) {
+    #shuffleHeader {
+        margin-top: 30%;
+    }
+}
+
+@media (max-width: 1024px) {
+    #firstHeader {
+        margin-top: 5%;
+    }
+}
+
 .bigDropDown {
     height: 25%;
     /*   padding: 1%;*/
@@ -12,9 +24,10 @@
 }
 
 h6 {
-  /*  margin-bottom: 2px;*/
-  /*  margin-top: 2px;*/
+    /*  margin-bottom: 2px;*/
+    /*  margin-top: 2px;*/
     color: #5e5e5e;
+    font-family: LGRegular;
 }
 
 .settingsColumn {
@@ -25,13 +38,14 @@ h6 {
 
 #settings {
     background-color: #2a2a2a;
+    margin-top: 6%;
 }
 
 #overlay {
     background-color: #2a2a2a;
     position: absolute;
-    padding:70px;
-    width: 50%;
+    padding: 70px;
+    width: 37.5%;
     border-radius: 5px;
 }
 
@@ -44,25 +58,34 @@ h6 {
 .k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
     background-color: #020202;
     border: none;
+    font-family: LGRegular;
 }
 
 .k-dropdown .k-input, .k-dropdown .k-state-focused .k-input, .k-menu .k-popup {
     color: white;
+    font-family: LGRegular;
+}
+
+.k-state-focused.k-state-selected, .k-list > .k-state-focused.k-state-selected {
+    background-color: #3f3f3f;
 }
 
 .k-item {
     background-color: #161616;
     color: white;
     text-align: center;
+    font-family: LGRegular;
 }
 
 .k-list, .k-reset {
+    font-family: LGRegular;
     background-color: #161616;
     border: none;
 }
 
 .k-block, .k-widget {
     background-color: #161616;
+    font-family: LGRegular;
 }
 
 /*SLIDERS*/
@@ -78,6 +101,7 @@ h6 {
 
 .k-slider-wrapper, .k-slider-selection, .k-slider-track {
     border: none;
+    font-family: LGRegular;
 }
 
 .k-draghandle {
@@ -85,14 +109,14 @@ h6 {
 }
 
 .k-i-arrow-s {
-  /*Add white expand icon here*/
+    /*Add white expand icon here*/
 }
 
 .k-tooltip {
     /*margin-top:3.5%;*/
     border-radius: 25px;
     font-size: small;
-    padding-top: 0px
-    padding-bottom: 0px;
+    padding-top: 0px padding-bottom : 0 px;
+    font-family: LGRegular;
 }
 

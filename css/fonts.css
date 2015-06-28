@@ -1,0 +1,20 @@
+@font-face {
+    font-family: LGLight;
+    src: url(../fonts/SourceSansPro-Light.otf);
+}
+
+@font-face {
+    font-family: LGRegular;
+    src: url(../fonts/SourceSansPro-Regular.otf);
+}
+
+@font-face {
+    font-family: LGSemibod;
+    src: url(../fonts/SourceSansPro-Semibold.otf);
+}
+
+@font-face {
+    font-family: LGSHalflingRegular;
+    src: url(../fonts/glyphicons-halflings-regular.woff);
+}
+

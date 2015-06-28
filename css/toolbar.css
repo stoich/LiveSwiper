@@ -40,12 +40,14 @@
     }
 
     #toolbar {
-        width: 50%;
-        margin-left: 25%;
+        margin-top: -7.4%;
+        width: 37.5%;
+        margin-left: 31.25%;
     }
 }
 
 #description {
+    font-family: LGRegular;
     border: 2px #dadada solid;
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
@@ -62,32 +64,66 @@
 }
 
 .btn-rounded {
-    border-radius: 30px;
+    font-family: LGRegular;
+    border-radius: 40px;
     font-weight: 500;
     font-size: 130%;
-    padding-top: 2%;
-    padding-bottom: 2%;
+    padding-top: 2.5%;
+    padding-bottom: 2.5%;
+    outline: none;
+}
+
+button:focus {
+    outline: 0;
+}
+
+button:active {
+    outline: 0;
+}
+
+#button-group {
+    margin-top: 6%;
+    margin-bottom: 2%;
 }
 
 #btn-shuffle {
     background-color: #2a2a2a;
+    position: relative;
     color: white;
     padding-left: 20%;
     padding-right: 20%;
+    z-index: 10;
+}
+
+#btn-shuffle:hover {
+    background-color: #161616;
 }
 
 .btn-preference-dislike {
-    background-color: #d0482e;
     color: white;
     padding-left: 8%;
     padding-right: 8%;
 }
 
 .btn-preference-like {
-    background-color: #37c92d;
     color: white;
     padding-left: 9%;
     padding-right: 9%;
+}
+
+#settingsToggleButton {
+    cursor: pointer;
+    cursor: hand;
+    display: inline-block;
+    background-color: #2a2a2a;
+    border-radius: 50%;
+    padding: 2%;
+    margin-bottom: 2px;
+}
+
+#settingsToggleButton img {
+    width: 28px;
+    height: 28px;
 }
 
 

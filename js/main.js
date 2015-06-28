@@ -1,6 +1,5 @@
 var app = angular.module('LiveSwiper', ['LocalStorageModule', "kendo.directives"]);
 app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localStorageService) {
-        var PREFERENCE_STORAGE_KEY = 'LiveSwiperStorage';
         var OPEN_SETTINGS_ICON_SRC = 'img/LiveguideSwipe_Configure_Icon.png';
         var CLOSE_SETTINGS_ICON_SRC = 'img/LiveguideSwipe_Configure_Close_Icon.png';
         var serviceConfiguration = {
@@ -44,13 +43,37 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
 
         /* Variable related to the user settings as a whole */
         $scope.userPreferences = {};
-        $scope.showSettings = true;
+        $scope.showSettings = false;
+        $scope.like = false;
+        $scope.dislike = false;
         $scope.settingsIcon = OPEN_SETTINGS_ICON_SRC;
         $scope.changeTime = {
             num: 360
         };
 
-        $scope.tooltipTemplate = '#if (selectionStart >= 1000) {#' +
+        $scope.uptimeTemplate = '#if (selectionStart >= 1000) {#' +
+            '#= selectionStart/1000#K min ' +
+            '#} else {#' +
+            '#if (selectionStart === 0) {#' +
+            'new' +
+            '#} else {#' +
+            '' +
+            '#= selectionStart #min' +
+            "#}#" +
+            '#}#' +
+            ' - ' +
+            '#if (selectionEnd === 10000000) {#' +
+            'infinity' +
+            '#} else {#' +
+
+            '#if (selectionEnd >= 1000) {#' +
+            '#= selectionEnd/1000#K min ' +
+            '#} else {#' +
+            '#= selectionEnd #min' +
+            '#}#' +
+            '#}#';
+
+        $scope.viewersTemplate = '#if (selectionStart >= 1000) {#' +
             '#= selectionStart/1000#K ' +
             '#} else {#' +
             '#= selectionStart #' +
@@ -100,6 +123,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             return null;
         };
         $scope.applySettings = function () {
+            $scope.userPreferences = {};
 
             var preferences = [];
             preferences.push(['category_s', $scope.categories, 'like']);
@@ -128,7 +152,7 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
                 .success(function (response) {
 
                     if (!response.response.hasOwnProperty('content')) {
-                        alert('No streams could be found matching current swipe settings');
+                        alert('Stream request failed. The filters you\'ve applied might be too restrictive. Try resetting the filters by refreshing the page if you keep getting this message.');
                     }
 
                     response = response.response.content;
@@ -147,6 +171,9 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
                         handleIncorrectResponse('missing web webEmbedURL_s')
                     }
 
+                    $scope.like = false;
+                    $scope.dislike = false;
+
                     resetCounter();
                 }).error(function (data, status, headers, config) {
                     handleIncorrectResponse(status);
@@ -158,6 +185,9 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             $scope.field = field;
             $scope.value = value;
             $scope.preference = preference;
+        }
+        $scope.togglePressed = function (buttonName) {
+            $scope[buttonName] = true;
         }
         $scope.addPreference = function (field, value, preference) {
             if (!$scope.userPreferences.hasOwnProperty(field)) {
@@ -173,8 +203,6 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             if (thisField[preference].indexOf(value) === -1) {
                 thisField[preference].push(value);
             }
-
-            commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
 
             console.log(field);
             console.log(value);
@@ -195,8 +223,6 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             if (!fullPreference.hasOwnProperty('like') && !fullPreference.hasOwnProperty('dislike')) {
                 delete $scope.userPreferences[field];
             }
-
-            commitToStorage(PREFERENCE_STORAGE_KEY, $scope.userPreferences);
         }
 
         $scope.toggleSettings = function (open) {
@@ -206,6 +232,11 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             } else {
                 $scope.showSettings = true;
                 $scope.settingsIcon = CLOSE_SETTINGS_ICON_SRC;
+
+                $timeout(function () {
+                    $scope.uptimeSlider.resize();
+                    $scope.viewersSlider.resize();
+                }, 200)
             }
         }
         $scope.removeType = function (field) {
@@ -286,25 +317,29 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
         var buildStringFilter = function (fieldName, field) {
             var filter = '';
 
-            if (field.hasOwnProperty('dislike')) {
-                var dislikeArray = field.dislike;
+            if (fieldName === 'tag') { //Only tag supports dislike;
+                if (field.hasOwnProperty('dislike')) {
+                    var dislikeArray = field.dislike;
 
-                for (var i = 0; i < dislikeArray.length; i++) {
-                    filter = appendFilter(filter, '-' + fieldName + '=' + dislikeArray[i]);
+                    for (var i = 0; i < dislikeArray.length; i++) {
+                        filter = appendFilter(filter, '-' + fieldName + '=' + dislikeArray[i]);
+                    }
                 }
+
+                if (field.hasOwnProperty('like')) {
+                    var likeArray = field.like;
+                    if (headsOrTails()) { //Should we pick from existing likes ?
+                        var selection = likeArray[Math.floor(Math.random() * likeArray.length)];
+                        filter = fieldName + '=' + selection;
+                    }
+                }
+
+                return filter;
             }
 
-            if (field.hasOwnProperty('like')) {
-                var likeArray = field.like;
-
-                if (headsOrTails()) { //Should we pick from existing likes ?
-                    var selection = likeArray[Math.floor(Math.random() * likeArray.length)];
-                    filter = fieldName + '=' + selection;
-                }
-            }
-
-            return filter;
+            return fieldName + '=' + field.like[0];
         }
+
         var buildIntegerFilter = function (fieldName, field) {
 
             var greaterThan = [];
@@ -352,24 +387,17 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
                 }
             }
 
-            var selection = '*';
-            if (headsOrTails()) { //Should we go for an exact integer ?
-                if (equals.length !== 0) {
-                    selection = equals[Math.floor(Math.random() * equals.length)];
-                }
-            } else {
-                var floor = '*';
-                var ceiling = '*';
-                if (greaterThan.length !== 0) {
-                    floor = Math.min.apply(Math, greaterThan) + 1; //Adding 1 to avoid >=
-                }
-
-                if (lesserThan.length !== 0) {
-                    ceiling = Math.max.apply(Math, lesserThan) - 1; //Subtrackting 1 to avoid >=
-                }
-
-                selection = '[' + floor + ' TO ' + ceiling + ']';
+            var floor = '*';
+            var ceiling = '*';
+            if (greaterThan.length !== 0) {
+                floor = Math.min.apply(Math, greaterThan);
             }
+
+            if (lesserThan.length !== 0) {
+                ceiling = Math.max.apply(Math, lesserThan);
+            }
+
+            var selection = '[' + floor + ' TO ' + ceiling + ']';
 
             filter = appendFilter(filter, fieldName + '=' + selection);
             return filter;
@@ -396,29 +424,6 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
 
             return url;
         }
-
-        //Populate the settings widgets with data from localStorage
-        var setStoredFilters = function (localStorage) {
-            for (var field in localStorage) {
-                if (localStorage.hasOwnProperty(field)) {
-                    if (field === 'tag_s') {
-                        continue;
-                    }
-
-                    if (getType(field) === 'string') {
-                        $scope[field.replace('_s', '')] = localStorage[field].like[0];
-                    }
-
-                    if (getType(field) === 'int') {
-                        $scope[field.replace('_i', '')] = [parseInt(localStorage[field].like[0].replace('>', '')), parseInt(localStorage[field].like[1].replace('<', ''))];
-                    }
-                }
-            }
-        }
-
-        var commitToStorage = function (key, model) {
-            localStorageService.set(key, model);
-        }
         var retrieveFromStorage = function (key) {
             return localStorageService.get(key);
         }
@@ -430,7 +435,15 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             return Math.floor(Math.random() * 2) == 0;
         }
         var resetCounter = function () {
-            $scope.counter = $scope.changeTime.num;
+            var shuffleSettingsInSeconds;
+
+            if ($scope.time.indexOf('h') !== -1) {
+                shuffleSettingsInSeconds = 90 * 60; //Hour and 1/2
+            } else {
+                shuffleSettingsInSeconds = $scope.time.replace('min', '') * 60;
+            }
+
+            $scope.counter = shuffleSettingsInSeconds;
         }
         var updateCounter = function () {
             if ($scope.counter === 0) {
@@ -441,15 +454,6 @@ app.controller('customersCtrl', function ($scope, $sce, $http, $timeout, localSt
             $timeout(updateCounter, 1000);
         }
         var initializeApp = function () {
-            if (localStorageService.keys().indexOf(PREFERENCE_STORAGE_KEY) !== -1) {
-                $scope.userPreferences = retrieveFromStorage(PREFERENCE_STORAGE_KEY);
-            }
-
-            $timeout(function () { //Hacky workaround - need delay to wait for options to render
-                setStoredFilters($scope.userPreferences);
-            }, 1000);
-
-
             $timeout(updateCounter, 1000); //Start counter;
             $scope.loadNextStream($scope.userPreferences); //Load the first stream;
         }
